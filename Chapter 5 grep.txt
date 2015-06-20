@@ -1,0 +1,260 @@
+Chapter 5
+Grep
+
+The grep command is universal. You’ll find it installed on every Unix/Linux based computer. It is, possibly, one of the most popular commands you’ll find.
+
+What is the grep command? grep is a tool for searching files for search terms, similar to ack or ag that we learned about in Chapter 2.
+
+Let’s quickly take a moment to compare grep with ack or ag to understand what the differences are.
+
+grep is found on almost all Unix/Linux systems, whereas ack or ag may need to be installed. grep is commonly used, because of its prevalence, in most example code you’ll find on the internet.
+
+ack or ag both sport more modern APIs than grep. Both are faster than grep; ag is significantly faster.
+
+It is a matter of personal taste which of these searching libraries you use; I would recommend trying them all and choosing the best one for your situation. With that said, you should, at the very least, understand the basics of grep as there will most likely be cases where the machine you’re using does not have one of the alternatives installed.
+
+5.1 The Basics
+
+We’ll want a sizable code base to search through to show the power of grep, so we’ll be using the Rails source code, as mentioned in the Preface.
+
+The basic usage of grep is pretty simple. Let’s search for the term Pack in the README.md file.
+
+$ grep Pack README.md
+Listing 5.1
+are bundled together in Action Pack. You can read more about Action Pack in its
+Active Record, Action Pack, and Action View can each be used independently ou...
+Listing 5.11 shows that we found two lines containing Pack in the file.
+
+5.1.1 Regular Expression Searches
+
+By default grep uses Regular Expressions to search for patterns in a file. For example, let’s search the README.md file for any lines that contain the letter r followed by any two characters, then followed by the letter y.
+
+$ grep "r..y" README.md
+Listing 5.2
+utility classes and standard library extensions that are useful for Rails, a...
+    * [Getting Started with Rails](http://guides.rubyonrails.org/getting_sta...
+    * [Ruby on Rails Guides](http://guides.rubyonrails.org)
+    * [The API Documentation](http://api.rubyonrails.org)
+    * [Ruby on Rails Tutorial](http://ruby.railstutorial.org/ruby-on-rails-t...
+[Contributing to Ruby on Rails guide](http://edgeguides.rubyonrails.org/cont...
+In Listing 5.22 we see that grep has found matches such as ruby and rary (which appeared inside of “library”).
+
+5.1.2 Counting Occurrences (-c)
+
+It can sometimes be useful to count the number of times a pattern is found in a file. To do this we can use the -c flag.
+
+$ grep -c ruby README.md
+Listing 5.3
+5
+As we can see in Listing 5.3 the README.md file contained the pattern ruby five times.
+
+5.1.3 Displaying Line Numbers (-n)
+
+When searching through a file it can be useful to know which line(s) of the file the results can be found on. The -n flag will print line numbers as part of the output.
+
+$ grep -n Ruby README.md
+Listing 5.4
+17:be ordinary Ruby classes, or Ruby classes that implement a set of interfaces
+33:Ruby code (ERB files). Views are typically rendered to generate a control...
+62:4. Using a browser, go to http://localhost:3000 and you'll see: "Welcome ...
+67:    * [Ruby on Rails Guides](http://guides.rubyonrails.org)
+69:    * [Ruby on Rails Tutorial](http://ruby.railstutorial.org/ruby-on-rail...
+73:We encourage you to contribute to Ruby on Rails! Please check out the
+74:[Contributing to Ruby on Rails guide](http://edgeguides.rubyonrails.org/c...
+83:Ruby on Rails is released under the [MIT License](http://www.opensource.o...
+Listing 5.43 demonstrates grep printing line numbers for our results.
+
+5.1.4 Case Insensitive Search (-i)
+
+In Section 5.1.1 we saw that grep uses Regular Expressions by default when searching a file. Because of this, searches are case sensitive. To change this default behavior and perform a case insensitive search instead, we can use the -i flag.
+
+First let’s start by searching for the term rails in the README.md file.
+
+$ grep rails README.md
+Listing 5.5
+        gem install rails
+        rails new myapp
+        rails server
+    * [Getting Started with Rails](http://guides.rubyonrails.org/getting_sta...
+    * [Ruby on Rails Guides](http://guides.rubyonrails.org)
+    * [The API Documentation](http://api.rubyonrails.org)
+    * [Ruby on Rails Tutorial](http://ruby.railstutorial.org/ruby-on-rails-t...
+[Contributing to Ruby on Rails guide](http://edgeguides.rubyonrails.org/cont...
+* [![Build Status](https://api.travis-ci.org/rails/rails.png)](https://travi...
+* [![Dependencies](https://gemnasium.com/rails/rails.png?travis)](https://ge...
+Listing 5.5 shows we are only finding results in the README.md file that match the lower case pattern, rails.
+
+Let’s change our search to use the -i flag and compare the results.
+
+$ grep -i rails README.md
+Listing 5.6
+## Welcome to Rails
+Rails is a web-application framework that includes everything needed to
+Understanding the MVC pattern is key to understanding Rails. MVC divides your
+your application. In Rails, database-backed model classes are derived from
+methods. Although most Rails models are backed by a database, models can also
+providing a suitable response. Usually this means returning HTML, but Rails ...
+In Rails, incoming requests are routed by Action Dispatch to an appropriate ...
+or to generate the body of an email. In Rails, View generation is handled by...
+Active Record, Action Pack, and Action View can each be used independently o...
+In addition to them, Rails also comes with Action Mailer ([README](actionmai...
+utility classes and standard library extensions that are useful for Rails, a...
+independently outside Rails.
+1. Install Rails at the command prompt if you haven't yet:
+        gem install rails
+2. At the command prompt, create a new Rails application:
+        rails new myapp
+        rails server
+4. Using a browser, go to http://localhost:3000 and you'll see: "Welcome abo...
+    * [Getting Started with Rails](http://guides.rubyonrails.org/getting_sta...
+    * [Ruby on Rails Guides](http://guides.rubyonrails.org)
+    * [The API Documentation](http://api.rubyonrails.org)
+    * [Ruby on Rails Tutorial](http://ruby.railstutorial.org/ruby-on-rails-t...
+We encourage you to contribute to Ruby on Rails! Please check out the
+[Contributing to Ruby on Rails guide](http://edgeguides.rubyonrails.org/cont...
+* [![Build Status](https://api.travis-ci.org/rails/rails.png)](https://travi...
+* [![Dependencies](https://gemnasium.com/rails/rails.png?travis)](https://ge...
+Ruby on Rails is released under the [MIT License](http://www.opensource.org/...
+When we compare Listing 5.64 to Listing 5.55 we can see we have found a lot more references to the pattern rails, such as Rails.
+
+We can accomplish the same effect using straight Regular Expressions, but it is a lot easier, and cleaner, to use the -i flag.
+
+5.2 Searching Multiple Files
+
+Up until this point we have only been searching a single file; however, grep gives us several options for searching through multiple files at the same time. In this section we’ll look at a few of these options.
+
+5.2.1 Searching Specific Files
+
+So far we have been passing a specific file name to grep as the last argument. To tell grep to search multiple files, we can simply pass in multiple file names to the grep command.
+
+$ grep rails README.md RELEASING_RAILS.rdoc
+Listing 5.7
+README.md:        gem install rails
+README.md:        rails new myapp
+README.md:        rails server
+README.md:    * [Getting Started with Rails](http://guides.rubyonrails.org/g...
+README.md:    * [Ruby on Rails Guides](http://guides.rubyonrails.org)
+README.md:    * [The API Documentation](http://api.rubyonrails.org)
+README.md:    * [Ruby on Rails Tutorial](http://ruby.railstutorial.org/ruby-...
+README.md:[Contributing to Ruby on Rails guide](http://edgeguides.rubyonrail...
+README.md:* [![Build Status](https://api.travis-ci.org/rails/rails.png)](htt...
+README.md:* [![Dependencies](https://gemnasium.com/rails/rails.png?travis)](...
+RELEASING_RAILS.rdoc:  http://travis-ci.org/rails/rails
+RELEASING_RAILS.rdoc:* rubyonrails-core@googlegroups.com
+RELEASING_RAILS.rdoc:    [aaron@higgins rails (3-0-stable)]$ git checkout -b...
+RELEASING_RAILS.rdoc:    [aaron@higgins rails (3-0-10)]$
+RELEASING_RAILS.rdoc:    [aaron@higgins rails (3-0-10)]$ git log v3.0.9..
+RELEASING_RAILS.rdoc:* rubyonrails-core@googlegroups.com
+RELEASING_RAILS.rdoc:* rubyonrails-talk@googlegroups.com
+RELEASING_RAILS.rdoc:issues with the release candidate to the rails-core mai...
+RELEASING_RAILS.rdoc:* http://weblog.rubyonrails.org
+RELEASING_RAILS.rdoc:Check the rails-core mailing list and the GitHub issue ...
+RELEASING_RAILS.rdoc:* rubyonrails-security@googlegroups.com
+Listing 5.76 shows results for the term rails across both files. Notice that grep conveniently prints the name of the file next to each line in the results, so we know which result came from which file.
+
+If we don’t want to list specific files, we can tell grep to search specific files in the current directory by giving it a pattern.
+
+$ grep gem *.rb
+Listing 5.8
+install.rb:  `cd #{framework} && gem build #{framework}.gemspec && gem insta...
+install.rb:`gem build rails.gemspec`
+install.rb:`gem install rails-#{version}.gem --no-ri --no-rdoc `
+install.rb:`rm rails-#{version}.gem`
+load_paths.rb:# bust gem prelude
+In Listing 5.8 we told grep to search all files in the current directory that match *.rb for the pattern gem.
+
+5.2.2 Recursive Searching (-R)
+
+grep will let us search recursively through directories as well. To search recursively we can use the -R flag, which will search whichever directory we specify, and all of its subdirectories.
+
+$ grep -R "Read" .
+Listing 5.9
+./actionpack/lib/action_controller/base.rb:  # Read more about writing ERB a...
+./actionpack/lib/action_controller/caching/fragments.rb:      # Reads a cach...
+./actionpack/lib/action_controller/metal/data_streaming.rb:      # Read abou...
+./actionpack/lib/action_dispatch/http/request.rb:    # Read the request \bod...
+./actionpack/lib/action_dispatch/middleware/cookies.rb:  # being written wil...
+./actionpack/lib/action_dispatch/middleware/cookies.rb:            "Read the...
+./actionpack/lib/action_dispatch/routing/url_for.rb:    # then ActionControl...
+./actionpack/test/controller/log_subscriber_test.rb:    assert_match(/Read f...
+./actionpack/test/controller/log_subscriber_test.rb:    assert_match(/Read f...
+./actionpack/test/controller/log_subscriber_test.rb:    assert_no_match(/Rea...
+...
+./guides/source/security.md:Note that _cross-site scripting (XSS) vulnerabil...
+./guides/source/security.md:#### Unauthorized Reading
+./railties/lib/rails/generators/actions.rb:      # Reads the given file at t...
+./railties/lib/rails/generators/app_base.rb:        comment = 'Build JSON AP...
+./railties/lib/rails/generators/app_base.rb:            "Turbolinks makes fo...
+./railties/lib/rails/generators/rails/app/templates/app/assets/javascripts/a...
+./railties/lib/rails/generators/rails/plugin/templates/rails/javascripts.js:...
+./railties/lib/rails/generators/test_unit/model/templates/fixtures.yml:# Rea...
+./railties/test/application/middleware/session_test.rb:      post '/foo/read...
+./railties/test/application/middleware/session_test.rb:      post '/foo/read...
+Listing 5.97 shows a truncated list of results for searching for the pattern read in the current directory (specified by the . at the end) and all subdirectories. The exact number of results I got from this query was 138, too many to display here.
+
+To trim our result set down even further, we can use the –include flag to specify a pattern that each file name much match to be included in the results.
+
+Let’s modify our query to only search for the term Read in yml files.
+
+$ grep -R --include="*.yml" "Read" .
+Listing 5.10
+./activerecord/test/fixtures/tasks.yml:# Read about fixtures at http://api.r...
+./guides/code/getting_started/test/fixtures/comments.yml:# Read about fixtur...
+./guides/code/getting_started/test/fixtures/posts.yml:# Read about fixtures ...
+./railties/lib/rails/generators/test_unit/model/templates/fixtures.yml:# Rea...
+As we can see from Listing 5.10, we have narrowed our results down to a much more manageable four results.
+
+In the introduction to this chapter I mentioned that both ack and ag have more modern interfaces than grep. We can see this by writing the same query again, this time using ag.
+
+$ ag Read -G yml$
+Listing 5.11
+activerecord/test/fixtures/tasks.yml:1:# Read about fixtures at http://api.r...
+guides/code/getting_started/test/fixtures/comments.yml:1:# Read about fixtur...
+guides/code/getting_started/test/fixtures/posts.yml:1:# Read about fixtures ...
+railties/lib/rails/generators/test_unit/model/templates/fixtures.yml:1:# Rea...
+If you compare Listing 5.108 and Listing 5.119 you’ll see that we get the same results for both commands.
+
+5.3 Searching from Standard Input
+
+One of the most common uses for the grep command is to search through data that has come from the results of another command, such as the ps command that we will learn about next in Chapter 6. You will see this usage of grep in a lot of online tutorials and sample code.
+
+$ ps -e | grep forego
+Listing 5.12
+98605 ttys005    0:00.86 forego start -p 3000
+In Listing 5.12 we used the ps command to get a list of all of the processes running on my machine. We then used the pipe operator (|) to send that data to grep to search for the process that matched the pattern, forego.
+
+5.4 Invert Searches (-v)
+
+One really useful feature of grep is the ability to invert a search using the -v flag.
+
+Let’s search for all lines in the README.md file that don’t contain the letter a.
+
+$ grep -v "a" README.md
+Listing 5.13
+   Run with `--help` or `-h` for options.
+
+
+
+## Contributing
+
+
+
+
+## License
+Listing 5.13 shows that our query was successful, but the results are slightly strange in that it also returned blank lines as well.
+
+By using what we learned in Section 5.3, we can create a grep query that finds all blank lines, and then inverts that query to only return non-blank lines. Next we can use the | operator to send that data to our second grep query that searches for lines that don’t contain the letter a.
+
+Listing 5.14 shows the results of us using two grep queries to get all non-blank lines that don’t contain the letter a.
+
+$ grep -v "^$" README.md | grep -v "a"
+Listing 5.14
+   Run with `--help` or `-h` for options.
+## Contributing
+## License
+5.5 Conclusion
+
+In this chapter we looked at how to use grep to build complex searches across multiple files.
+
+While I do feel that grep is a very important tool to learn, I believe that ack and ag are better alternatives. With that said, good knowledge of grep will certainly come in handy when you are working on a machine that doesn’t have ack or ag installed on it.
+

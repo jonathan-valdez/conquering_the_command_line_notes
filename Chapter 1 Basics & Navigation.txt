@@ -1,0 +1,382 @@
+Chapter 1
+Basics and Navigation
+
+pwd
+present working directory
+
+By default, pwd will list the “logical” path of your current directory. 
+
+If we want to see the actual physical path, with all of the symlinks resolved, we can use the -P flag.
+
+ls
+
+Often it is useful to be able to see what files or directories are in your current directory, or another directory. 
+
+To accomplish this we can use the ls command.
+
+By default, ls will operate in the current directory that you’re in. 
+However, you may want to find out what files are in another directory, without first leaving your current directory. 
+The ls command will let you pass it a path to work on.
+
+$ ls /usr/local/
+
+So far we have seen all of the “visible” files and directories listed,
+however, it is common on Unix and Linux based machines to have “invisible”, or “hidden”, files that are prefixed with a “.” (dot).
+  
+Using the -a flag we can see both “visible” and “hidden” files and directories.
+
+$ ls -a
+
+the -a flag is including all of the “hidden” files, as well as the “visible” ones.
+
+whenever we have used the ls command, we have been given back a list of names, arranged in a column.
+
+One of the most useful flags for ls is 
+
+the -l flag that will list out the names of the files and directories as well as give more detailed information about them.
+
+$ ls -l
+
+If the -l option is given, the following information is displayed for each file: 
+file mode, number of links, owner name, group name, number of bytes in the file, abbreviated month, day-of-month file was last modified, hour file last modified, minute file last modified, and the pathname.
+
+
+We can also see that some paths are followed by -> and another path. These paths are symlinked to the directories that follow the ->.
+
+the -l flag to give us a more detailed view of files and directories in our current directory, including the number of bytes in the file.
+
+While knowing the number of bytes can be useful, I find it more useful to see the size of the file in human readable terms, such as 1.7K or 35M. 
+Thankfully ls will give us this information if we use the -h flag.
+
+$ ls -lh
+
+Sorting by Size
+
+Another useful flag we can use with ls is -S, which will sort the results of ls by file size, instead of the default sorting by name.
+
+$ ls -lhS
+
+the results of ls are displayed with the largest files at the top, and the smallest files at the bottom.
+
+Sorting by Last Modified Time (-t)
+
+It can often be useful to be able to sort your ls results by the last time the files were modified. To do this we can use the -t flag.
+
+$ ls -lt
+
+Reverse Sort (-r)
+
+When you are listing a directory that contains many files, sorting with ls is a great way to help quickly find the files or directories you are looking for.
+By default, ls sorts all of its results alphabetically.
+
+Using the -r flag we are able to reverse the results of ls.
+
+$ ls -lr
+
+we can see that default sort of ls, alphabetically, has now been reversed
+
+We can also use the -r flag with other options to reverse their sort order. 
+For example, ls -lSr will list the files by size with smaller files listed first.
+
+Links (ln)
+
+Links allow us to create an association from one file or directory to another. 
+A link allows us to “point” one file or directory to another. 
+This can be quite useful for maintaining a sane file system, or for having multiple versions of a file or directory, and not wanting to use disk space to store copies of those files.
+
+
+An example of where links can come in handy is when deploying a web application.
+Let’s say when you deploy your application you create a new directory whose name is the current time, and you put your application code into that directory.
+After your code is there, you would have to edit your web server configuration to tell it to point to the new directory where your latest code is. 
+However, using links you can create a link called “current” that your web server points at, and you can change where the “current” link points to - in this case the last timestamped folder you created for your code.
+
+Links can either be “hard” or “symbolic” as we’ll see in the following sections.
+
+Hard Links
+
+We can use the ln command to create a link between two files. By default, the ln command will create a hard link between these files.
+
+Hard links create an identical copy of the linked file on disk, that gets updated automatically as the source file gets updated. That means if the content of the source is changed, so will the target file.
+
+To create a link to a file, we call the ln command - first giving it the name of the file we want to link to (our source file), followed by the name of the linked file we want to create (the target).
+
+$ ln a.txt b.txt
+
+An important thing to note about hard links is that they only work on the current file system. You can not create a hard link to a file on a different file system. To do that you need to use symbolic links, Section 1.4.3.
+
+While the content of the source and target files are linked, if the source file gets deleted, the target file will continue to live as an independent file, despite the severed link.
+
+$ rm a.txt
+
+In Listing 1.13 we can see that the b.txt file still exists, despite the target file having been deleted.
+
+If we were to use the cat tool from Chapter 9 Section 9.2, we can see that the contents of b.txt are still intact.
+
+$ cat b.txt
+
+Hello World
+
+Forcing a link -f
+
+If the source file already exists you will get an error, like that in Listing 1.15.
+
+$ ln a.txt b.txt
+
+ln: b.txt: File exists
+
+To fix the error in Listing 1.15 you can pass the -f flag to force the link.
+
+$ ln -f a.txt b.txt
+
+Symbolic Links (-s)
+
+We have seen that the default type of link that gets created when using ln is that of a hard link. Unfortunately hard links do not work for directories. To create a link to a directory, we can use the -s flag to create a symbolic link. This can also be used for linking to files as well, not just directories.
+
+Symbolic links can also link to files or directories on other file systems. This makes symbolic links (symlinks) more powerful, and more common than the default hard links.
+
+To create a symbolic link we can use the -s flag.
+
+$ ln -s a.txt b.txt
+
+Change Directories (cd)
+
+While staying in the same directory all of the time might seem like fun, eventually you’ll need to change, or navigate, into another directory. To do this we can use the very simple cd command.
+
+cd takes one argument - the path to the directory you wish to navigate to.
+
+$ cd ~/Documents
+
+Navigating Up (..)
+
+Once inside of a directory, it can be useful to be able to navigate back up a directory. One way to do this would be to call cd giving it the full path to the directory you want to go. Another way to accomplish the task of moving up to the parent directory is to use the special path ...
+
+$ cd ..
+
+Telling cd to navigate to .. will cause it to navigate to the parent directory of the current directory.
+
+Navigating to the Home Directory
+
+When you are in a directory and want to navigate back to your home directory, you can call cd without any arguments.
+
+$ cd
+
+Creating Directories (mkdir) 	
+
+Directories are a great place to store and organize files, and creating them is easy. To create a directory we can use the mkdir command followed by the name of the directory we wish to create.
+
+$ mkdir foo
+
+Create Intermediate Directories (-p)
+
+The mkdir command will allow us to create nested directories using the -p flag.
+
+$ mkdir -p a/b/c
+
+$ ls -la a/b/c
+
+Verbose Output (-v)
+
+The mkdir command supports a verbose mode flag, -v. Adding the -v flag will print the results of mkdir to the console.
+
+$ mkdir -v a
+
+Using the -v flag can provide useful reporting when writing scripts that will execute a lot of commands for you.
+
+Copying Files (cp)
+
+Copying files and directories can be accomplished using the cp command.
+
+Copying a Single File
+
+To copy a single file we can call the cp command with two arguments. The first argument is the file we want to copy, the source file. The second argument, or target, is the location we want to copy the source file to. This target can either be the name of the file you wish to copy to, or the directory you wish to copy to. If you specify just a directory then the original file name of the source file will be used to create the new file in the target directory.
+
+$ cp a.txt b.txt
+
+$ ls -l
+
+Copying Multiple Files
+
+cp will allows you to list several files you would like to copy. When you do this, however, the last argument must be a directory, and the original file names of the source files will be used as the names of the new files in the target directory.
+
+$ cp a.txt b.txt foo
+
+$ ls -l foo
+
+We can also pass simple patterns to cp to achieve the same results as Listing 1.25.
+
+$ cp *.txt foo
+
+: $ ls -l foo
+
+Verbose Output (-v)
+
+The cp command will print verbose output regarding the files that were copied using the -v flag.
+
+$ cp -v a.txt b.txt
+
+a.txt -> b.txt
+
+Copying Directories (-R)
+
+By default cp expects the source to be copied to be a file. If we try to copy a directory to another directory we will get the error we see in Listing 1.28.
+
+$ cp foo bar
+
+Listing 1.28
+cp: foo is a directory (not copied).
+
+To fix the error in Listing 1.28, we can use the -R flag to recursively copy the directory’s contents to the new directory.
+
+$ cp -Rv foo bar
+
+Listing 1.29
+foo -> bar
+foo/a.txt -> bar/a.txt
+foo/b.txt -> bar/b.txt
+foo/c.txt -> bar/c.txt
+
+Using the verbose flag, -v, we can see in Listing 1.29 all of the files from the source directory, foo, have been copied to the target directory, bar.
+
+Force Overwriting of a File (-f)
+
+In Listing 1.30 we can see that we have two files, a.txt and b.txt.
+
+$ ls -l
+
+Listing 1.30
+
+-rw-r--r--  1 markbates  staff  0 Dec 18 13:58 a.txt
+-rw-r--r--  1 root       staff  6 Dec 18 14:55 b.txt
+
+When looking at Listing 1.30 we can see that the two files listed are owned by two different users. The first file, a.txt, is owned by user markbates, while the second file is owned by root.
+
+What would happen if we tried to copy a.txt to b.txt?
+
+$ cp a.txt b.txt
+
+Listing 1.31
+cp: b.txt: Permission denied
+
+As we can see in Listing 1.31 we get an error when trying to overwrite b.txt with a.txt. We don’t have permission to do that. When errors such as this occur we can use the -f flag to force the copying of the source file to the target file.
+
+$ cp -f a.txt b.txt
+
+Listing 1.32: $ ls -l
+-rw-r--r--  1 markbates  staff  0 Dec 18 13:58 a.txt
+-rw-r--r--  1 markbates  staff  0 Dec 18 14:57 b.txt
+
+Listing 1.32 shows that by using the -f flag we were able to successfully overwrite the target file, b.txt, with the contents of the source file, a.txt.
+
+Confirm Overwriting of a File (-i)
+
+When you are about to copy over several files at once, and some of the target files already exist, it may be beneficial to confirm that you do in fact want to copy the source file and replace the target file.
+
+cp will happily prompt you to confirm that you are about to overwrite another file if you use the -i flag.
+
+$ cp -i a.txt b.txt
+
+
+Listing 1.33
+overwrite b.txt? (y/n [n])
+
+In Listing 1.33 we are presented with a prompt asking us to confirm, y or n, whether to overwrite the target file. A response of y will overwrite the file. A response of n will skip the file and move on to the next copy, if there is one.
+
+
+1.8 Deleting Files (rm)
+
+The rm command is used to delete files and folders. It supports the same flags and arguments as the cp command that we learned about in Section 1.7.
+
+$ rm -v a.txt
+
+Listing 1.34
+a.txt
+
+Listing 1.34 uses the -v flag to list files that were deleted using the rm command.
+
+Moving Files (mv)
+
+The process for moving files is almost identical to that of copying files, which we learned about in Section 1.7.
+
+mv supports the same flags as cp. In reality the mv command is really just a combination of cp and rm to achieve the desired outcome of moving a file from one location to another.
+
+$ mv -v a.txt b.txt
+
+Listing 1.35
+a.txt -> b.txt
+
+We can achieve the same effect from Listing 1.35 by using the cp and rm commands. This can be useful when trying to move a file across file systems, as the mv command doesn’t support that.
+
+$ cp a.txt b.txt
+$ rm a.txt
+
+Listing 1.36: $ ls -l
+-rw-r--r--  1 markbates  staff  0 Dec 18 16:20 b.txt
+
+Listing 1.36 shows that we were able to replicate the behavior of mv using the cp and rm commands.
+
+Input/Output (|, >)
+
+The Unix philosophy, which you’ll hear repeated often, is “do one thing, and do it well”. This theme is evident as we move through this book. Each command covered does one thing, and does it well.
+
+1.10.1 Redirecting Output (|)
+
+With these seemingly small individual commands, we can build some pretty impressive work flows by redirecting the output of one command to the input to another command. This is made possible by using the “pipe” operator, |.
+
+In the following example, we “pipe” the output of the ls command to the input of the grep command to find all the files in my home directory that contain an underscore, _.
+
+$ ls -a ~ | grep _
+
+Listing 1.37
+.DS_Store
+.bash_history
+.bash_profile
+.guard_history
+.pry_history
+.psql_history
+.rediscli_history
+.scala_history
+
+When using the | operator we can chain together any number of commands. For example, we can take the output of Listing 1.37 and pass it to the sed command from Chapter 7 and change all of the underscores to dashes.
+
+$ ls -a ~ | grep _ | sed "s/_/-/g"
+
+Listing 1.38
+.DS-Store
+.bash-history
+.bash-profile
+.guard-history
+.pry-history
+.psql-history
+.rediscli-history
+.scala-history
+Listing 1.38 shows the result of chaining together the ls, grep, and sed commands using the | operator.
+
+1.10.2 Writing to a File (>)
+
+In addition to redirecting the output from one process and sending it to another process, we can also write that output to a file using the > operator.
+
+$ ls -a ~ | grep _ > underscores.txt
+
+Listing 1.39: $ cat underscores.txt
+.DS_Store
+.bash_history
+.bash_profile
+.guard_history
+.pry_history
+.psql_history
+.rediscli_history
+.scala_history
+
+Listing 1.39 shows the contents of the underscores.txt file (using cat from Chapter 9 Section 9.2), which contains the results of our search for files in the home directory that contain underscores.
+
+1.10.3 Reading from a File (<)
+
+In Section 1.10.2 we saw that we can use > to write data to a file. If we instead wanted to read data from a file, we can use <.
+
+In Chapter 9, Section 9.6, we see a great example of this using the pbpaste command.
+
+1.11 Conclusion
+
+In this chapter we covered the basics of the command line, from how to navigate between directories, to how to move, delete, or copy files, and more.
+
+Hopefully this chapter has provided you with the solid footing that you’ll need to conquer the command line. The commands in this chapter will become second nature to you over time, as you’ll use them continuously each day.

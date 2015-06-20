@@ -1,0 +1,317 @@
+Find.txt
+
+In Chapter 2, we used Ack and Ag to search through a large code base to find files that contained certain query terms, but what if we want to search for files using criteria other than the file’s contents?
+
+The find command is just such a search tool. With find we can quickly search for files whose path, or name, contains a query term. We can also find files that are owned by a particular user, are of a certain size, have been last modified in the last n days, and much more. In Chapter 8, we’ll use find to generate a list of files to create an archive from.
+
+In this chapter, we’ll look at some of the most useful features of the find command.
+
+The source code we’ll be using for this chapter’s examples is the Rails source code as mentioned in the Preface.
+
+4.1 The Basics (-name)
+
+The find command has a very basic usage format.
+
+$ find PATH_TO_SEARCH OPTIONS_TO_USE PATTERN_TO_SEARCH_FOR
+With that knowledge in place, let’s write a simple query to find all files that end in model.rb.
+
+$ find . -name model.rb
+As we can see in Listing 4.1 we are only finding files that match model.rb exactly.
+
+Listing 4.1
+./activemodel/lib/active_model/model.rb
+./activerecord/lib/rails/generators/active_record/model/templates/model.rb
+The reason is that the -name option is expecting a pattern to match, and the pattern we gave it used no wild cards to indicate that we want to match the end of the file’s name.
+
+Let’s change our query slightly to fix the problem.
+
+$ find . -name \*model.rb
+Listing 4.2
+./activemodel/lib/active_model/model.rb
+./activemodel/lib/active_model.rb
+./activerecord/lib/rails/generators/active_record/model/templates/model.rb
+./activerecord/test/models/arunit2_model.rb
+./railties/lib/rails/generators/active_model.rb
+Listing 4.2 shows that we managed to search the current directory, . (and by default its sub-directories), for files whose file name ends with *model.rb.
+
+You’ll notice that we used . to represent the current directory; we could have also used the equivalent expression ./. We also had to escape the * so that it wasn’t misinterpreted by the operating system.
+
+4.2 Searching Paths (-path)
+
+In Section 4.1 we learned how to use find to search for files whose name matches a pattern, but what about if we want to find files, or directories, whose path matches a pattern?
+
+To search within a path we can use the -path flag instead of the -name flag. Let’s try to find any files whose path contains the word session.
+
+$ find . -path \*session\*
+Listing 4.3
+./actionpack/lib/action_dispatch/middleware/session
+./actionpack/lib/action_dispatch/middleware/session/abstract_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cache_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cookie_store.rb
+./actionpack/lib/action_dispatch/middleware/session/mem_cache_store.rb
+./actionpack/lib/action_dispatch/request/session.rb
+./actionpack/test/dispatch/request/session_test.rb
+./actionpack/test/dispatch/session
+./actionpack/test/dispatch/session/abstract_store_test.rb
+./actionpack/test/dispatch/session/cache_store_test.rb
+./actionpack/test/dispatch/session/cookie_store_test.rb
+./actionpack/test/dispatch/session/mem_cache_store_test.rb
+./actionpack/test/dispatch/session/test_session_test.rb
+./actionpack/test/fixtures/session_autoload_test
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test/foo.rb
+./activerecord/test/models/possession.rb
+./guides/assets/images/session_fixation.png
+./guides/code/getting_started/config/initializers/session_store.rb
+./railties/test/application/middleware/session_test.rb
+Listing 4.3 shows the results of our query. The output shows us the many files and directories that contain the word session.
+
+4.2.1 Find Only Files or Directories (-type)
+
+In Listing 4.3, we wanted to find files whose path name contained the word session. Based on the results, however, note that directories whose names matched the pattern were also supplied.
+
+By using the -type flag, we can tell find to either look exclusively for files, -type f, or just directories, -type d.
+
+We can now alter our query to exclusively search for files whose path contains session so that directories are not included in the results.
+
+$ find . -path \*session\* -type f
+Listing 4.4
+./actionpack/lib/action_dispatch/middleware/session/abstract_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cache_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cookie_store.rb
+./actionpack/lib/action_dispatch/middleware/session/mem_cache_store.rb
+./actionpack/lib/action_dispatch/request/session.rb
+./actionpack/test/dispatch/request/session_test.rb
+./actionpack/test/dispatch/session/abstract_store_test.rb
+./actionpack/test/dispatch/session/cache_store_test.rb
+./actionpack/test/dispatch/session/cookie_store_test.rb
+./actionpack/test/dispatch/session/mem_cache_store_test.rb
+./actionpack/test/dispatch/session/test_session_test.rb
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test/foo.rb
+./activerecord/test/models/possession.rb
+./guides/assets/images/session_fixation.png
+./guides/code/getting_started/config/initializers/session_store.rb
+./railties/test/application/middleware/session_test.rb
+Similarly, we can also search for directories whose path contains session.
+
+$ find . -path \*session\* -type d
+Listing 4.5
+./actionpack/lib/action_dispatch/middleware/session
+./actionpack/test/dispatch/session
+./actionpack/test/fixtures/session_autoload_test
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test
+
+4.2 Searching Paths (-path)
+
+In Section 4.1 we learned how to use find to search for files whose name matches a pattern, but what about if we want to find files, or directories, whose path matches a pattern?
+
+To search within a path we can use the -path flag instead of the -name flag. Let’s try to find any files whose path contains the word session.
+
+$ find . -path \*session\*
+Listing 4.3
+./actionpack/lib/action_dispatch/middleware/session
+./actionpack/lib/action_dispatch/middleware/session/abstract_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cache_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cookie_store.rb
+./actionpack/lib/action_dispatch/middleware/session/mem_cache_store.rb
+./actionpack/lib/action_dispatch/request/session.rb
+./actionpack/test/dispatch/request/session_test.rb
+./actionpack/test/dispatch/session
+./actionpack/test/dispatch/session/abstract_store_test.rb
+./actionpack/test/dispatch/session/cache_store_test.rb
+./actionpack/test/dispatch/session/cookie_store_test.rb
+./actionpack/test/dispatch/session/mem_cache_store_test.rb
+./actionpack/test/dispatch/session/test_session_test.rb
+./actionpack/test/fixtures/session_autoload_test
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test/foo.rb
+./activerecord/test/models/possession.rb
+./guides/assets/images/session_fixation.png
+./guides/code/getting_started/config/initializers/session_store.rb
+./railties/test/application/middleware/session_test.rb
+Listing 4.3 shows the results of our query. The output shows us the many files and directories that contain the word session.
+
+4.2.1 Find Only Files or Directories (-type)
+
+In Listing 4.3, we wanted to find files whose path name contained the word session. Based on the results, however, note that directories whose names matched the pattern were also supplied.
+
+By using the -type flag, we can tell find to either look exclusively for files, -type f, or just directories, -type d.
+
+We can now alter our query to exclusively search for files whose path contains session so that directories are not included in the results.
+
+$ find . -path \*session\* -type f
+Listing 4.4
+./actionpack/lib/action_dispatch/middleware/session/abstract_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cache_store.rb
+./actionpack/lib/action_dispatch/middleware/session/cookie_store.rb
+./actionpack/lib/action_dispatch/middleware/session/mem_cache_store.rb
+./actionpack/lib/action_dispatch/request/session.rb
+./actionpack/test/dispatch/request/session_test.rb
+./actionpack/test/dispatch/session/abstract_store_test.rb
+./actionpack/test/dispatch/session/cache_store_test.rb
+./actionpack/test/dispatch/session/cookie_store_test.rb
+./actionpack/test/dispatch/session/mem_cache_store_test.rb
+./actionpack/test/dispatch/session/test_session_test.rb
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test/foo.rb
+./activerecord/test/models/possession.rb
+./guides/assets/images/session_fixation.png
+./guides/code/getting_started/config/initializers/session_store.rb
+./railties/test/application/middleware/session_test.rb
+Similarly, we can also search for directories whose path contains session.
+
+$ find . -path \*session\* -type d
+Listing 4.5
+./actionpack/lib/action_dispatch/middleware/session
+./actionpack/test/dispatch/session
+./actionpack/test/fixtures/session_autoload_test
+./actionpack/test/fixtures/session_autoload_test/session_autoload_test
+
+4.3 And/Or Expressions (-or)
+
+We can further refine our search from Listing 4.4 to find only files whose path name contains session and whose file name contains mem.
+
+$ find . -path \*session\* -type f -name \*mem\*
+Listing 4.6
+./actionpack/lib/action_dispatch/middleware/session/mem_cache_store.rb
+./actionpack/test/dispatch/session/mem_cache_store_test.rb
+As Listing 4.6 shows, we can combine both the -name and the -path flags together to make our search very specific. This type of query is an AND query. Both flags have to match for the file to be included in the results.
+
+We can also do OR queries in find using the -or operator and some well placed parentheses.
+
+Let’s write a query that will find files whose name either ends in .gemspec or in .jpg.
+
+$ find . \( -name \*.gemspec -or -name \*.jpg \) -type f
+Listing 4.7
+./actionmailer/actionmailer.gemspec
+./actionmailer/test/fixtures/attachments/foo.jpg
+./actionmailer/test/fixtures/attachments/test.jpg
+./actionpack/actionpack.gemspec
+./actionpack/test/fixtures/multipart/mona_lisa.jpg
+./actionview/actionview.gemspec
+./activemodel/activemodel.gemspec
+./activerecord/activerecord.gemspec
+./activerecord/test/assets/flowers.jpg
+./activesupport/activesupport.gemspec
+./guides/assets/images/akshaysurve.jpg
+./guides/assets/images/oscardelben.jpg
+./guides/assets/images/rails_guides_kindle_cover.jpg
+./guides/assets/images/vijaydev.jpg
+./rails.gemspec
+./railties/lib/rails/generators/rails/plugin/templates/%name%.gemspec
+./railties/railties.gemspec
+It’s important to remember to properly escape characters such as parentheses and asterisks as to not confuse the operating system. Most of the problems you’ll run into with queries such as this is improper escaping, so make sure to keep an eye out for it.
+
+4.4 Not Matching Query (!, -not)
+
+Up until this point, we have been searching for files whose names or paths match a certain pattern. Now, let’s do the opposite. We can query for files, or directories, that don’t match a certain pattern.
+
+Let’s say we want to find all of the files in our directory that don’t contain the letter t somewhere in their path.
+
+To do that we can use the -not operator in front of the -path flag.
+
+$ find . -not -path \*t\* -type f
+Listing 4.8
+./CONTRIBUTING.md
+./Gemfile
+./guides/CHANGELOG.md
+./guides/rails_guides/helpers.rb
+./guides/rails_guides/indexer.rb
+./guides/rails_guides/kindle.rb
+./guides/rails_guides/markdown/renderer.rb
+./guides/rails_guides/markdown.rb
+./guides/rails_guides.rb
+./guides/Rakefile
+./guides/source/command_line.md
+./guides/source/configuring.md
+./guides/source/engines.md
+./guides/source/form_helpers.md
+./guides/source/i18n.md
+./guides/source/kindle/KINDLE.md
+./guides/source/kindle/rails_guides.opf.erb
+./guides/source/plugins.md
+./guides/source/rails_on_rack.md
+./guides/source/ruby_on_rails_guides_guidelines.md
+./guides/source/upgrading_ruby_on_rails.md
+./rails.gemspec
+./RAILS_VERSION
+./Rakefile
+./README.md
+./RELEASING_RAILS.rdoc
+./version.rb
+Another way to achieve the same result set as Listing 4.8 is to use ! instead of the -not operator. They will both give you the same results, but I personally prefer the ! variant.
+
+$ find . \! -path \*t\* -type f
+
+4.5 Find by Last Modified Time (-mtime)
+
+find allows us to search for files and directories in many different ways. Up until now, we’ve been focused on the name of the file or the path of the file, but what about searching for files based on their last modified date?
+
+Using the -mtime flag we can search for files whose last modified date was in the last n days.
+
+Here we can find files who have been modified in the last day.
+
+$ find . -mtime -1
+Listing 4.9
+./actionpack/lib/abstract_controller.rb
+./ci/travis.rb
+./Gemfile
+./railties/test/engine_test.rb
+The number we pass to the -mtime flag, in this case -1, is the number of days we are interested in. This example returns files that have been modified in the last 24 hours. An option of -2 would represent the last 48 hours and so on.
+
+Using the -mmin flag we can look for files that have been modified in the last n minutes.
+
+$ find . -mmin -5
+Listing 4.10
+./ci/travis.rb
+4.6 Find by File Size (-size)
+
+Another useful flag is -size, which, as its name states, allows us to look for files whose size is over the specified amount.
+
+Let’s do a search for files whose size is greater than 200 kilobytes.
+
+$ find . -size +200k
+Listing 4.11
+./.git/index
+./.git/objects/pack/pack-3fc5fb51b38dba971962c3dfe13c643c7c3ff357.pack
+./.git/objects/pack/pack-a93c0c2849d6dba30ddb4a967548b955005ecbf1.idx
+./.git/objects/pack/pack-a93c0c2849d6dba30ddb4a967548b955005ecbf1.pack
+./actionview/test/template/date_helper_test.rb
+./activesupport/lib/active_support/values/unicode_tables.dat
+If we don’t want to see those files that are under the .git directory we can use the ! operator we learned about in Section 4.4 to remove them.
+
+$ find . \! -path '*/\.*' -size +200k
+Listing 4.12
+./actionview/test/template/date_helper_test.rb
+./activesupport/lib/active_support/values/unicode_tables.dat
+Table 4.1 shows the different modifiers we can add to the -size number to specify the size of the files we want to look for.
+
+modifier	size	actual size
+k	kilobytes	(1024 bytes)
+M	megabytes	(1024 kilobytes)
+G	gigabytes	(1024 megabytes)
+T	terabytes	(1024 gigabytes)
+P	petabytes	(1024 terabytes)
+Table 4.1: Modifiers for -size
+4.7 Performing Operations (-delete)
+
+The find tool also has the built-in ability to execute certain commands. One of the more useful built-in commands is the -delete flag.
+
+The -delete flag will, as its name suggests, delete all files and directories that match the pattern. This makes this type of operation incredibly efficient as we can combine the finding and deleting into one operation instead of two.
+
+Let’s find all of the files whose name ends with .yml and delete them from our repository. Here I’m also using the -print flag to show the files that will be deleted.
+
+$ find ./guides -type f -name \*.yml -print -delete
+Listing 4.13
+./guides/code/getting_started/config/database.yml
+./guides/code/getting_started/config/locales/en.yml
+./guides/code/getting_started/test/fixtures/comments.yml
+./guides/code/getting_started/test/fixtures/posts.yml
+We can verify that the -delete was performed by running the find command and seeing that no matches are found.
+
+$ find ./guides -type f -name \*.yml
+4.8 Conclusion
+
+We’ve covered a lot of what find can do in this chapter, but it is capable of significantly more. There is not enough space here to cover all of the different flags, options, and ways to find the files you are looking for, but hopefully this has given you a feel for what this indispensable tool can accomplish.
+
+For further evidence of how useful find is, see Chapter 8 Section 8.2.3 where we use find to build a list of files to build a tar archive.
+

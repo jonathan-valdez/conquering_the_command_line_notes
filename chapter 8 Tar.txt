@@ -1,0 +1,362 @@
+chapter 8 Tar.txt
+
+There will come a time when you want to take several files and archive them together into a single file - this is where the tar (tape archive) command comes in.
+
+tar can quickly join together multiple files into one larger file, while still preserving meta-data such as Unix permissions. By default tar does not compress files, but it does have a flag that will compress the archive using gzip. We’ll learn about this later in Section 8.7.
+
+The source code we’ll be using for this chapter’s examples is the Rails source code, as mentioned in the Preface.
+
+8.1 The Basics (-c)
+
+Let’s start by building a very simple archive, also commonly referred to as a tarball. To do that, we use the -c flag on the tar command to tell it that we want to create a new archive, and give it a list of files we want to archive. In this case we want to archive all of the files in the tools directory.
+
+$ tar -c tools/
+The results of our command can be seen in Listing 8.1.
+
+Listing 8.1
+tools/000755 000765 000024 00000000000 12244661361 013337
+5ustar00markbatesstaff000000 000000 tools/console000755 000765 000024 00000000255
+12244661361 014731 0ustar00markbatesstaff000000 000000 #!/usr/bin/env ruby
+require File.expand_path('../../load_paths', __FILE__)
+require 'rails/all'
+require 'active_support/all'
+require 'irb'
+require 'irb/completion'
+IRB.start
+tools/profile000755 000765 000024 00000003451 12244661361 014730
+0ustar00markbatesstaff000000 000000 #!/usr/bin/env ruby
+# Example:
+#   tools/profile activesupport/lib/active_support.rb
+ENV['NO_RELOAD'] ||= '1'
+ENV['RAILS_ENV'] ||= 'development'
+
+require 'benchmark'
+
+module RequireProfiler
+  private
+  def require(file, *args) RequireProfiler.profile(file) { super } end
+  def load(file, *args) RequireProfiler.profile(file) { super } end
+
+  @depth, @stats = 0, []
+  class << self
+    attr_accessor :depth
+    attr_accessor :stats
+
+    def profile(file)
+      stats << [file, depth]
+      self.depth += 1
+      result = nil
+      elapsed = Benchmark.realtime { result = yield }
+      self.depth -= 1
+      stats.pop if stats.last.first == file
+      stats << [file, depth, elapsed] if result
+      result
+    end
+  end
+end
+
+GC.start
+before_rss = `ps -o rss= -p #{Process.pid}`.to_i
+
+path = ARGV.shift
+if mode = ARGV.shift
+  require 'ruby-prof'
+  RubyProf.measure_mode = RubyProf.const_get(mode.upcase)
+  RubyProf.start
+else
+  Object.instance_eval { include RequireProfiler }
+end
+
+elapsed = Benchmark.realtime { require path }
+results = RubyProf.stop if mode
+
+GC.start
+after_rss = `ps -o rss= -p #{Process.pid}`.to_i
+
+if mode
+  if printer = ARGV.shift
+    RubyProf.const_get("#{printer.to_s.classify}Printer").new(results)
+  elsif RubyProf.const_defined?(:CallStackPrinter)
+    File.open("#{File.basename(path, '.rb')}.#{mode}.html", 'w') do |out|
+      RubyProf::CallStackPrinter.new(results).print(out)
+    end
+  else
+    File.open("#{File.basename(path, '.rb')}.#{mode}.callgrind", 'w') do |out|
+      RubyProf::CallTreePrinter.new(results).print(out)
+    end
+  end
+end
+
+RequireProfiler.stats.each do |file, depth, sec|
+  if sec
+    puts "%8.1f ms  %s%s" % [sec * 1000, ' ' * depth, file]
+  else
+    puts "#{' ' * (13 + depth)}#{file}"
+  end
+end
+puts "%8.1f ms  %d KB RSS" % [elapsed * 1000, after_rss - before_rss]
+The first thing that should be pointed out is the apparent “gibberish” preceding each of the files that makes up the archive. This “gibberish” is, in fact, the Unix meta-data of that file; including such things as the permissions, file’s owner, group, etc - all valuable information to be retained.
+
+The second thing that should be noted is that the archive was printed to “standard out” (STDOUT)1 and not saved to a file. We will learn how to save the archive to a file in Section 8.2.
+
+Writing archives to the STDOUT instead of a file can be useful when you want to pipe the output of the archive into another command. We won’t be doing any of that in this chapter, but it is useful to know that tar can create an archive without having to save it to a file.
+
+8.2 Saving to a File (-f)
+
+Being able to write archives to STDOUT does have it uses, but a majority of the time you’ll want to create a new file representing the archive you’ve just created. The -f flag in tar lets us specify a file that we want to save the archive to.
+
+$ tar -cf foo.tar tools/
+If the creation of the archive file was successful, the tar command will produce no output.
+
+Listing 8.2: $ ls -la
+drwxr-xr-x  28 markbates  staff   952 Nov 25 11:08 .
+drwxr-xr-x   8 markbates  staff   272 Nov 25 09:29 ..
+drwxr-xr-x  14 markbates  staff   476 Nov 25 11:07 .git
+-rw-r--r--   1 markbates  staff   508 Nov 25 09:47 .gitignore
+-rw-r--r--   1 markbates  staff   853 Nov 25 09:47 .travis.yml
+-rw-r--r--   1 markbates  staff    68 Nov 25 09:47 .yardopts
+-rw-r--r--   1 markbates  staff  1203 Nov 25 09:47 CONTRIBUTING.md
+-rw-r--r--   1 markbates  staff  2337 Nov 25 09:47 Gemfile
+-rw-r--r--   1 markbates  staff    11 Nov 25 09:47 RAILS_VERSION
+-rw-r--r--   1 markbates  staff  4118 Nov 25 09:47 README.md
+-rw-r--r--   1 markbates  staff  7669 Nov 25 09:47 RELEASING_RAILS.rdoc
+-rw-r--r--   1 markbates  staff  2844 Nov 25 09:47 Rakefile
+drwxr-xr-x   9 markbates  staff   306 Nov 25 09:47 actionmailer
+drwxr-xr-x  10 markbates  staff   340 Nov 25 09:47 actionpack
+drwxr-xr-x  10 markbates  staff   340 Nov 25 09:47 actionview
+drwxr-xr-x  10 markbates  staff   340 Nov 25 09:47 activemodel
+drwxr-xr-x  11 markbates  staff   374 Nov 25 09:47 activerecord
+drwxr-xr-x  10 markbates  staff   340 Nov 25 09:47 activesupport
+drwxr-xr-x   3 markbates  staff   102 Nov 25 09:47 ci
+-rw-r--r--   1 markbates  staff  5120 Nov 25 11:08 foo.tar
+drwxr-xr-x  12 markbates  staff   408 Nov 25 09:47 guides
+-rw-r--r--   1 markbates  staff   524 Nov 25 09:47 install.rb
+-rw-r--r--   1 markbates  staff    51 Nov 25 09:47 load_paths.rb
+-rw-r--r--   1 markbates  staff  1159 Nov 25 09:47 rails.gemspec
+drwxr-xr-x  12 markbates  staff   408 Nov 25 09:47 railties
+drwxr-xr-x   3 markbates  staff   102 Nov 25 09:47 tasks
+drwxr-xr-x   4 markbates  staff   136 Nov 25 09:47 tools
+-rw-r--r--   1 markbates  staff   159 Nov 25 09:47 version.rb
+Listing 8.2 shows the results of querying the current directory. In that list of files we can see the foo.tar file we created.
+
+8.2.1 Verbose Mode (-v)
+
+Using the -v flag we can see which files are being added to our archive. This will output the list of files in the archive after it has been generated.
+
+$ tar -cvf foo.tar tools/
+Listing 8.3
+a tools
+a tools/console
+a tools/profile
+Listing 8.3 shows the output of the tar command using the -v flag. We will be using this flag for the rest of the examples in this chapter.
+
+8.2.2 Multiple Directories/Files
+
+Up until now we have been creating archives by passing in a single directory, however we can pass in any number of directories or files to put in the archive. We just need to pass them as extra arguments at the end of the tar command.
+
+$ tar -cvf foo.tar tools/ tasks/ install.rb rails.gemspec version.rb
+Listing 8.4
+a tools
+a tools/console
+a tools/profile
+a tasks
+a tasks/release.rb
+a install.rb
+a rails.gemspec
+a version.rb
+8.2.3 Building from find (-T)
+
+In Chapter 4 we learned about the find tool and how to use it to find specific files matching a pattern. Using the -T flag and the pipe operator (|), we can use find to generate a list of files and then use tar to archive those files.
+
+First let’s build a find query that finds all of the files ending in .gemspec.
+
+$ find . -name \*.gemspec
+Listing 8.5
+./actionmailer/actionmailer.gemspec
+./actionpack/actionpack.gemspec
+./actionview/actionview.gemspec
+./activemodel/activemodel.gemspec
+./activerecord/activerecord.gemspec
+./activesupport/activesupport.gemspec
+./rails.gemspec
+./railties/lib/rails/generators/rails/plugin/templates/%name%.gemspec
+./railties/railties.gemspec
+Listing 8.5 shows that our find query is working correctly. Now we can use | to pipe the output of the find query to the tar command.
+
+The -T flag will read in a list of file names from another file. In our case we are going to use - in place of the name of a file. This tells tar that it should read in the list of files from the find query we piped in.
+
+$ find . -name \*.gemspec | tar -cvf gemspecs.tar -T -
+Listing 8.6
+a ./actionmailer/actionmailer.gemspec
+a ./actionpack/actionpack.gemspec
+a ./actionview/actionview.gemspec
+a ./activemodel/activemodel.gemspec
+a ./activerecord/activerecord.gemspec
+a ./activesupport/activesupport.gemspec
+a ./rails.gemspec
+a ./railties/lib/rails/generators/rails/plugin/templates/%name%.gemspec
+a ./railties/railties.gemspec
+In Listing 8.6 we can see that the files from our original find query have been added to the archive.
+
+This demonstrates how incredibly useful these types of programs can be. They are powerful and useful individually, but when you start to combine them together you can quickly make quite complex applications from these simple building blocks.
+
+8.3 Listing Files (-t)
+
+In Section 8.2.2 we created an archive that contains multiple files, and because we used the -v flag, we saw which files were included in that archive when we created it. If we were to hand this archive over to someone else, how would they know what files were in it? For that matter, how would we know what files were in it should we come back to it at a later date?
+
+To list files in an existing archive we can use the -t flag.
+
+$ tar -tf foo.tar
+Listing 8.7
+tools/
+tools/console
+tools/profile
+tasks/
+tasks/release.rb
+install.rb
+rails.gemspec
+version.rb
+Listing 8.7 lists the files in the archive that we created in Section 8.2.2.
+
+8.4 Appending Files (-r)
+
+This flag is not compatible with compressed archives, Section 8.7.
+
+In Section 8.2.2 we created an archive that contains several files. Now we’ve realized that we have forgotten a few files that need to be added. We can remedy this situation in two ways. The first way is delete the archive and start again. The second way is to use the -r flag to append the additional files to the archive.
+
+$ tar -rvf foo.tar Gemfile README.md
+Listing 8.8
+a Gemfile
+a README.md
+Listing 8.9: $ tar -tf foo.tar
+tools/
+tools/console
+tools/profile
+tasks/
+tasks/release.rb
+install.rb
+rails.gemspec
+version.rb
+Gemfile
+README.md
+We can see in Listing 8.8 and Listing 8.9 that by using the -r flag, the files we have specified have been added to the archive.
+
+8.5 Updating a File (-u)
+
+This flag is not compatible with compressed archives, Section 8.7.
+
+As was the case in Section 8.4 where we needed to add missing files to the archive, sometimes it is necessary to update files that are already in the archive. To do this we can use the -u flag.
+
+$ tar -uvf foo.tar version.rb
+Listing 8.10
+a version.rb
+We have successfully updated the archive with the new version of the file, and it was much quicker than having to rebuild the entire archive again.
+
+8.6 Extracting Files (-x)
+
+Up until this point we have focused on getting files into archives, but what about getting them out again? To extract all of our files into the current directory we can use the -x flag.
+
+$ tar -xvf foo.tar
+Listing 8.11
+x tools/
+x tools/console
+x tools/profile
+x tasks/
+x tasks/release.rb
+x install.rb
+x rails.gemspec
+x version.rb
+x Gemfile
+x README.md
+Listing 8.11 shows the files that have been extracted from the archive. These files will also be restored with their original meta-data, permissions, owner, etc…
+
+8.6.1 Extracting a Single File
+
+Extracting the entire archive is the most common use case, however, there will be times when you’ll only want to extract one file from the archive. To extract a specific file(s), we can just list them at the end of the extraction call - much like how we listed them when creating the archive.
+
+$ tar -xvf foo.tar rails.gemspec
+Listing 8.12
+x rails.gemspec
+Listing 8.12 demonstrates how we are able to extract just the rails.gemspec file from the archive.
+
+8.6.2 Extracting to a Different Folder (-C)
+
+Up until this point we have been extracting all of the files to the current directory we are in, but we can easily extract to a different location.
+
+First, let’s create a new folder, named myfolder, that we will extract all of the files to.
+
+$ mkdir myfolder
+Using the -C flag we can pass a folder to the tar command as the location we want to extract the file to.
+
+$ tar -xvf foo.tar -C ./myfolder
+Listing 8.13
+x tools/
+x tools/console
+x tools/profile
+x tasks/
+x tasks/release.rb
+x install.rb
+x rails.gemspec
+x version.rb
+x Gemfile
+x README.md
+Listing 8.13 shows that all of the files have been extracted. We can use the find tool we learned about in Chapter 4 to look at the structure of the myfolder directory.
+
+$ find ./myfolder
+Listing 8.14
+./myfolder
+./myfolder/Gemfile
+./myfolder/install.rb
+./myfolder/rails.gemspec
+./myfolder/README.md
+./myfolder/tasks
+./myfolder/tasks/release.rb
+./myfolder/tools
+./myfolder/tools/console
+./myfolder/tools/profile
+./myfolder/version.rb
+As we can see in Listing 8.14 all of the files were extracted to their appropriate locations based on how they were archived.
+
+8.7 Compressing with gzip (-z)
+
+As mentioned at the very beginning of the chapter, tar does not compress archives by default, it just generates a single large file from multiple smaller files. With that said, tar does provide three different compression algorithms to you. The first one, gzip (-z), is the most common, so that is the one we will discuss here. The others are bzip2 (-j) and Unix compress (-Z). bzip2 is considerably slower for compression and decompression, but produces smaller archives, and Unix compress is faster, but produces considerably larger archives.
+
+Let’s start by creating a regular archive. We will archive all of the files in the activerecord directory2.
+
+$ tar -cf ar.tar activerecord/
+Listing 8.15: $ ls -la ar.*
+-rw-r--r--  1 markbates  staff  3311104 Nov 26 14:12 ar.tar
+Listing 8.15 shows us that our new archive, ar.tar, is a whopping 3.3Mb. We can use the -z flag to run the archive through gzip and compress it to make it smaller. When we do this it is customary to append .gz to the end of the archive’s file name to let others know that this archive has been compressed3.
+
+$ tar -czf ar.tar.gz activerecord/
+Listing 8.16: $ ls -la ar.*
+-rw-r--r--  1 markbates  staff  3311104 Nov 26 14:12 ar.tar
+-rw-r--r--  1 markbates  staff   615262 Nov 26 14:14 ar.tar.gz
+In Listing 8.16 we can see that the compressed version of the archive weighs in at only 615Kb compared to the 3.3Mb of the uncompressed archive; a significant reduction in file size.
+
+8.8 Extracting Compressed Files (-z)
+
+Extracting files from a compressed archive is not much different than how we learned to extract files in Section 8.6. All we need to do is add the -z flag to the extract command so it first uncompresses the archive and then extracts the files.
+
+$ tar -xvzf ar.tar.gz
+Listing 8.17
+x activerecord/
+x activerecord/activerecord.gemspec
+x activerecord/CHANGELOG.md
+x activerecord/examples/
+...
+x activerecord/lib/active_record/associations/builder/singular_association.rb
+x activerecord/examples/.gitignore
+x activerecord/examples/performance.rb
+x activerecord/examples/simple.rb
+Listing 8.17 shows a truncated list of the files that were extracted.
+
+8.9 Conclusion
+
+In this chapter we learned how to use tar to:
+
+Build an archive from multiple files and directories, while retaining their meta-data, such as their permissions.
+Manipulate existing archives by appending new files and updating existing files in the archive.
+Extract all of the files from an archive, as well as extracting individual files.
+Compress archives to reduce the archive’s overall file size.
+The tar command is a powerful and easy to master tool, as long as you can remember the few flags and options we talked about in this chapter.

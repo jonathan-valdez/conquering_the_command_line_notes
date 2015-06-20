@@ -1,0 +1,605 @@
+cURL.txt
+
+cURL is easily one of the most powerful tools in a developer’s toolkit, as well as one of the most complex ones. It ships with a dizzying array of options and features, most of which you will not need on a daily basis.
+
+cURL is a tool for working with URLs. cURL lets us query a URL from the command line. It lets us post form data, FTP to a server, and much, much more. One of the places that cURL comes in handy most often is working with APIs. With cURL we can try out new APIs simply, with just the command line, with no need for installing, or writing complex wrappers around the API.
+
+3.2 The Basics
+
+The simplest thing we can do with cURL is to make an HTTP request to a given server1 and print its response out to the console.
+
+$ curl quiet-waters-1228.herokuapp.com/hello
+
+As you can see in Listing 3.1, cURL prints the response of the web page to the console.
+
+Listing 3.1
+Hello, World!
+Thank you for cURLing me!
+
+If we want to see more information about the response, we can make the same request using the -i flag.
+
+$ curl -i quiet-waters-1228.herokuapp.com/hello
+
+Listing 3.2
+HTTP/1.1 200 OK
+Cache-Control: max-age=0, private, must-revalidate
+Content-Type: text/html; charset=utf-8
+Etag: "a0bb15ce430e40738d857e3e7dfe0de7"
+Server: thin 1.6.1 codename Death Proof
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Request-Id: d605f89d-bffc-4983-8ca4-8ac2b77c7b8d
+X-Runtime: 0.002568
+X-Ua-Compatible: chrome=1
+X-Xss-Protection: 1; mode=block
+transfer-encoding: chunked
+Connection: keep-alive
+
+Hello, World!
+Thank you for cURLing me!
+Listing 3.2 demonstrates that the -i flag will return response information such as headers, server type, content type, and more. This level of detail can prove to be extremely useful for debugging a request.
+
+3.3 Following Redirects (-L)
+
+There are times when we are trying to download a resource from a server, but instead of the resource we requested, the server returns a status code of 302. The 302 response may also include a message that the resource has moved. See Listing 3.3 for just such an example.
+
+$ curl -i quiet-waters-1228.herokuapp.com/redirectme
+
+Listing 3.3
+HTTP/1.1 302 Moved Temporarily
+Cache-Control: no-cache
+Content-Type: text/html; charset=utf-8
+Location: http://quiet-waters-1228.herokuapp.com/hello
+Server: thin 1.6.1 codename Death Proof
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Request-Id: e9785070-173c-4e8a-bbf5-1686806cbd6b
+X-Runtime: 0.007276
+X-Ua-Compatible: chrome=1
+X-Xss-Protection: 1; mode=block
+transfer-encoding: chunked
+Connection: keep-alive
+
+<html>
+  <body>
+    You are being
+    <a href="http://quiet-waters-1228.herokuapp.com/hello">redirected</a>.
+  </body>
+</html>
+How do we follow redirects without having to first parse the response and build a second request to the correct resource? To do this, we can use the -L flag built into cURL.
+
+$ curl -L quiet-waters-1228.herokuapp.com/redirectme
+Using the -L flag we should now get the same response we did in Listing 3.1.
+
+3.4 Downloading Files (-O)
+
+Printing responses to a console can be useful, but one of cURL’s most popular features is its ability to easily download files.
+
+If we were to run the following command against a file, the result wouldn’t be very pleasing to your eyes on the screen.
+
+$ curl http://quiet-waters-1228.herokuapp.com/assets/image.jpg
+
+Listing 3.4
+??JFIF,,??tExifII*
+????(1?2?i???          NIKONE950,,Adobe Photoshop 7.02002:04:25 15:29:28??????"?'
+Listing 3.4 shows the first two lines from a lot of gibberish that represents a binary image file. However if we add the -O flag to the request, the results will be saved into a file named image.jpg.
+
+$ curl -O http://quiet-waters-1228.herokuapp.com/assets/image.jpg
+
+Listing 3.5 and Listing 3.6 show the file downloading, and then a confirmation of the file saved to disk.
+
+Listing 3.5
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  413k  100  413k    0     0   306k      0  0:00:01  0:00:01 --:--:--  306k
+Listing 3.6: $ ls -la | grep image.jpg
+-rw-r--r--@  1 markbates  staff  423159 Nov 18 10:46 image.jpg
+As Listing 3.6 shows us, the file is downloaded from the server to the current working directory using the same name as the file on the server. Section 3.4.1 will show us how we can change the name of this file.
+
+See Chapter 5 for more information on how to use grep.
+
+3.4.1 Custom File Names (-o)
+
+More often than not, we can use the name of the file from the server as the name of the file that we download to disk. However, in this example case the name image.jpg leaves a lot to be desired. We don’t know what it is an image of.
+
+We can solve this problem in several different ways. The first way is to use the mv command to rename the file after we’ve downloaded it. Another way is to use the -o flag to give cURL a file name to save the file to.
+
+$ curl -o my_image.jpg http://quiet-waters-1228.herokuapp.com/assets/image.jpg
+
+Listing 3.7: $ ls -la | grep my_image.jpg
+-rw-r--r--@  1 markbates  staff  423159 Nov 18 10:58 my_image.jpg
+Listing 3.7 shows that the file has now been downloaded using the custom file name that we specified using the -o flag.
+
+3.5 Changing the HTTP Request Method (-X)
+
+So far we have just been using cURL to make GET requests; however, cURL supports all of the HTTP request methods, including POST, PATCH, PUT, DELETE, etc.
+
+To change the request method, we can use the -X flag.
+
+Let’s make a simple POST request to an “echo” server that will print out any parameters we send to it.
+
+$ curl -X POST quiet-waters-1228.herokuapp.com/echo
+Listing 3.8 shows the result of our request.
+
+Listing 3.8
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unix and Linux Commands for Developers</title>
+  <link href="/assets/application.css" media="all" rel="stylesheet" />
+  <script src="/assets/application.js"></script>
+</head>
+<body>
+
+  <p>
+    <strong>url:</strong>
+    <span>
+      http://quiet-waters-1228.herokuapp.com/echo
+    </span>
+  </p>
+  <p>
+    <strong>method:</strong>
+    <span>
+      POST
+    </span>
+  </p>
+
+</body>
+</html>
+Let’s make the same request again, only this time using the PUT request method.
+
+$ curl -X PUT quiet-waters-1228.herokuapp.com/echo
+Listing 3.9 confirms that we did indeed change the request method from POST to PUT.
+
+Listing 3.9
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unix and Linux Commands for Developers</title>
+  <link href="/assets/application.css" media="all" rel="stylesheet" />
+  <script src="/assets/application.js"></script>
+</head>
+<body>
+
+  <p>
+    <strong>url:</strong>
+    <span>
+      http://quiet-waters-1228.herokuapp.com/echo
+    </span>
+  </p>
+  <p>
+    <strong>method:</strong>
+    <span>
+      PUT
+    </span>
+  </p>
+
+</body>
+</html>
+Depending on your request type (in our case this was HTTP), the -X flag changes the request method appropriately. For example, with an FTP request the -X flag will allow you to change the request type from LIST to another request method.
+
+3.5.1 Sending Parameters
+
+So far, we haven’t sent any parameters to the server. There are a few different ways to do this.
+
+The first, and most obvious method, is to append query string parameters to the URL2 itself.
+
+$ curl -X POST "quiet-waters-1228.herokuapp.com/echo?fname=Mark&lname=Bates"
+Listing 3.10 shows that the query string parameters are parsed correctly by the echo server.
+
+Listing 3.10
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unix and Linux Commands for Developers</title>
+  <link href="/assets/application.css" media="all" rel="stylesheet" />
+  <script src="/assets/application.js"></script>
+</head>
+<body>
+
+  <p>
+    <strong>url:</strong>
+    <span>
+      http://quiet-waters-1228.herokuapp.com/echo?fname=Mark&lname=Bates
+    </span>
+  </p>
+  <p>
+    <strong>parameters:</strong>
+    <span>
+      {"fname"=>"Mark", "lname"=>"Bates"}
+    </span>
+  </p>
+  <p>
+    <strong>method:</strong>
+    <span>
+      POST
+    </span>
+  </p>
+
+</body>
+</html>
+Passing query string parameters will work with any request type, not just POST. This is the simplest, and easiest, way to pass data to the server in a cURL request, but not the only way.
+
+3.5.2 Passing Data in a Request Body (-d)
+
+When making non-GET requests, such as a POST, it is quite common to want to pass data to the server via the body of the request. After all, query string parameters can’t represent a complex form very well.
+
+cURL provides the -d flag to us pass data as part of the request body.
+
+Instead of passing the data via query string parameters, let’s use the -d flag instead.
+
+$ curl -X POST -d "fname=Mark&lname=Bates" quiet-waters-1228.herokuapp.com/echo
+
+curl -X POST -d "fname=Mark&lname=Bates" quiet-waters-1228.herokuapp.com/echo
+
+As we can see in Listing 3.11, the echo server reads the body and converts it into parameters, just as if we had used query string parameters.
+
+Listing 3.11
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unix and Linux Commands for Developers</title>
+  <link href="/assets/application.css" media="all" rel="stylesheet" />
+  <script src="/assets/application.js"></script>
+</head>
+<body>
+
+  <p>
+    <strong>url:</strong>
+    <span>
+      http://quiet-waters-1228.herokuapp.com/echo
+    </span>
+  </p>
+  <p>
+    <strong>parameters:</strong>
+    <span>
+      {"fname"=>"Mark", "lname"=>"Bates"}
+    </span>
+  </p>
+  <p>
+    <strong>method:</strong>
+    <span>
+      POST
+    </span>
+  </p>
+  <p>
+    <strong>body:</strong>
+    <span>
+      fname=Mark&lname=Bates
+    </span>
+  </p>
+
+</body>
+</html>
+We can also see in Listing 3.11 that the echo server now displays a body attribute to us. This proves that the data is in fact coming as a request body, and not just basic parameters.
+
+We can make this more interesting by passing JSON via the -d flag.
+
+$ curl -X POST -d "{\"name\":\"Mark\"}" quiet-waters-1228.herokuapp.com/echo
+Listing 3.12
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unix and Linux Commands for Developers</title>
+  <link href="/assets/application.css" media="all" rel="stylesheet" />
+  <script src="/assets/application.js"></script>
+</head>
+<body>
+
+  <p>
+    <strong>url:</strong>
+    <span>
+      http://quiet-waters-1228.herokuapp.com/echo
+    </span>
+  </p>
+  <p>
+    <strong>method:</strong>
+    <span>
+      POST
+    </span>
+  </p>
+  <p>
+    <strong>body:</strong>
+    <span>
+      {"name"=>"Mark"}
+    </span>
+  </p>
+
+</body>
+</html>
+Listing 3.12 shows the JSON has been received and parsed correctly.
+
+3.5.3 Using a File for a Request Body (-d)
+
+Being able to send the request body via the command line is very useful, but most of the time we’ll want to read in a file and send that as the body of the request. An example of this would be sending larger amounts of JSON.
+
+Let’s say we have the file from Listing 3.13, how would we post that to a server?
+
+Listing 3.13: form_data.json
+{
+  "lname": "Bates",
+  "fname": "Mark",
+  "site": "http://www.markbates.com",
+  "twitter": "http://twitter.com/markbates"
+}
+
+The -d flag already gives us all that we need to get the job done. By passing the -d flag a file name prefixed with @, it will read in that file as the request body.
+
+curl -X POST -d @form_data.json quiet-waters-1228.herokuapp.com/echo
+
+Listing 3.14
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Unix and Linux Commands for Developers</title>
+  <link href="/assets/application.css" media="all" rel="stylesheet" />
+  <script src="/assets/application.js"></script>
+</head>
+<body>
+
+  <p>
+    <strong>url:</strong>
+    <span>
+      http://quiet-waters-1228.herokuapp.com/echo
+    </span>
+  </p>
+  <p>
+    <strong>method:</strong>
+    <span>
+      POST
+    </span>
+  </p>
+  <p>
+    <strong>body:</strong>
+    <span>
+      {"lname"=>"Bates", "fname"=>"Mark",
+"site"=>"http://www.markbates.com", "twitter"=>"http://twitter.com/markbates"}
+    </span>
+  </p>
+
+</body>
+</html>
+With this simple way of using files for request bodies, it can be very easy to write a script using cURL to upload files to a remote server.
+
+3.5.4 Form Parameters (-F)
+
+Another way to pass parameters using cURL is the -F flag. Using this flag we can send parameters that will be interpreted by the remote server as if they had been posted from an HTML form.
+
+$ curl -X POST -F user[fname]=Mark -F user[lname]=Bates -F foo=bar \
+  quiet-waters-1228.herokuapp.com/echo -H "Accept: application/json"
+
+  Listing 3.15
+{
+  "url": "http://quiet-waters-1228.herokuapp.com/echo",
+  "parameters": {"user":{"fname":"Mark","lname":"Bates"},"foo":"bar"},
+  "method": "POST",
+  "body": "------------------------------d6e7f7029fa5\r\nContent-Disposition:
+form-data; name=\"user[fname]\"\r\n\r\nMark\r\n------------------------------
+d6e7f7029fa5\r\nContent-Disposition: form-data; name=\"user[lname]\"\r\n\r\n
+Bates\r\n------------------------------d6e7f7029fa5\r\nContent-Disposition:
+form-data; name=\"foo\"\r\n\r\nbar\r\n------------------------------
+d6e7f7029fa5--\r\n"
+}
+
+In Listing 3.15 we can see that the parameters were interpreted by the server as form-data. This can be used to mimic HTML forms, and can be particularly useful to post both form parameters as well as one, or more, files.
+
+File Uploads with Form Parameters
+
+Uploading a file using the -F flag is almost identical to using the -d flag that we saw in Section 3.5.3. The only difference is that the file must be given a parameter name. This can be see in Listing 3.16.
+
+Listing 3.16
+$ curl -X POST -F user[fname]=Mark -F user[lname]=Bates -F foo=bar \
+  -F user[photo]=@path/to/image.jpg quiet-waters-1228.herokuapp.com/echo
+  -H "Accept: application/json"
+
+ 3.6 Setting Headers (-H)
+
+So far, all of the responses we have received from the server have been in HTML, but the server is also capable of sending us back data formatted in either JSON or the dreaded XML.
+
+In order to tell the server which type of content we want returned, we must set the Content-Type header using the -H flag.
+
+$ curl -X POST -d @form_data.json quiet-waters-1228.herokuapp.com/echo \
+  -H "Accept: application/json"
+Listing 3.17 shows that by using the -H flag and giving it
+
+"Accept: application/json"
+the server responds appropriately with JSON instead of HTML.
+
+Listing 3.17
+{
+   "body" : {
+      "site" : "http://www.markbates.com",
+      "twitter" : "http://twitter.com/markbates",
+      "lname" : "Bates",
+      "fname" : "Mark"
+   },
+   "url" : "http://quiet-waters-1228.herokuapp.com/echo",
+   "method" : "POST"
+}
+Setting the content type of a request isn’t the only header we can specify using the -H flag. We can set any headers that the responding server will accept. cURL allows multiple -H flags on a request, making it easy to send several headers at once.
+
+$ curl -X POST -d @form_data.json quiet-waters-1228.herokuapp.com/echo \
+  -H "Accept: application/json" -H "X-Auth: 1234567890"
+As we see in Listing 3.18 the new header, "X-Auth", has been received by the server.
+
+Listing 3.18
+{
+   "body" : {
+      "site" : "http://www.markbates.com",
+      "twitter" : "http://twitter.com/markbates",
+      "lname" : "Bates",
+      "fname" : "Mark"
+   },
+   "url" : "http://quiet-waters-1228.herokuapp.com/echo",
+   "x-auth" : "1234567890",
+   "method" : "POST"
+}
+
+As we see in Listing 3.18 the new header, "X-Auth", has been received by the server.
+
+Listing 3.18
+{
+   "body" : {
+      "site" : "http://www.markbates.com",
+      "twitter" : "http://twitter.com/markbates",
+      "lname" : "Bates",
+      "fname" : "Mark"
+   },
+   "url" : "http://quiet-waters-1228.herokuapp.com/echo",
+   "x-auth" : "1234567890",
+   "method" : "POST"
+}
+
+3.7 Basic HTTP Auth (-u)
+
+A lot of the internet exists behind a login form these days, so it’s important to understand how we can use cURL to access resources that may be protected by such an authentication requirement.
+
+Let’s see what happens when we try to access a resource that requires authentication.
+
+$ curl -i -X POST quiet-waters-1228.herokuapp.com/login
+Listing 3.19 shows that we received a status code of 401 and a message that it can’t find a user.
+
+Listing 3.19 shows that we received a status code of 401 and a message that it can’t find a user.
+
+Listing 3.19
+HTTP/1.1 401 Unauthorized
+Cache-Control: no-cache
+Content-Type: application/json; charset=utf-8
+Server: thin 1.6.1 codename Death Proof
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Request-Id: da6bbeae-1b77-4f2a-bf75-300b981e108d
+X-Runtime: 0.009238
+X-Ua-Compatible: chrome=1
+X-Xss-Protection: 1; mode=block
+transfer-encoding: chunked
+Connection: keep-alive
+
+{"error":"Unknown User"}
+
+The -u flag will let us pass a username and a password to the server to solve this problem.
+
+$ curl -X POST -u "user1:password1" quiet-waters-1228.herokuapp.com/login
+As seen in Listing 3.20 the login was successful and we now use the information for user1.
+
+Listing 3.20
+{
+   "password" : "password1",
+   "name" : "User 1",
+   "id" : 1,
+   "username" : "user1"
+}
+With the -u flag we can now successfully authenticate ourselves against any page that uses HTTP auth.
+
+$ curl -X POST -u "user1:password1" quiet-waters-1228.herokuapp.com/login
+As seen in Listing 3.20 the login was successful and we now use the information for user1.
+
+Listing 3.20
+{
+   "password" : "password1",
+   "name" : "User 1",
+   "id" : 1,
+   "username" : "user1"
+}
+With the -u flag we can now successfully authenticate ourselves against any page that uses HTTP auth.
+
+3.8 Saving and Sending Cookies/Headers (-D, -b)
+
+In Section 3.7 we learned how to use the -u flag to authenticate against basic HTTP authentication. But how do we handle a page that is behind a login, yet doesn’t respond to HTTP auth?
+
+Let’s attempt to request the endpoint in question and see what the result is.
+
+$ curl -i quiet-waters-1228.herokuapp.com/whoami
+Not surprisingly we get a 401, just like in Listing 3.19, so let’s try and use the -u flag and see if we can gain access to the page that way.
+
+$ curl -i -u "user1:password1" quiet-waters-1228.herokuapp.com/whoami
+Again, we are greeted with a 401. The server is trying to use a session cookie to authenticate us, and we don’t have one. To solve this problem, we first need to hit the login endpoint using the -u flag, save the session cookie that is returned, and then pass that session cookie back again on subsequent requests.
+
+The -D flag will tell cURL to dump headers and cookies into a specified file in the current directory.
+
+$ curl -X POST -D headers -u "user1:password1" \
+  quiet-waters-1228.herokuapp.com/login
+The more verbose –dump-header flag is a mnemonic synonym for -D.
+
+$ curl -X POST --dump-header headers -u "user1:password1" \
+  quiet-waters-1228.herokuapp.com/login
+Listing 3.21 shows the contents of the file that got created as a result of our request.
+
+Listing 3.21: headers
+HTTP/1.1 200 OK
+Cache-Control: max-age=0, private, must-revalidate
+Content-Type: application/json; charset=utf-8
+Etag: "768e41b20e1e385d06f9b2da6f7e0f08"
+Server: thin 1.6.1 codename Death Proof
+Set-Cookie: _curl_test_app_rails_session=TWpwUitjellkSE1QOHpyTEN0Q1JkazFhVVhvMi9
+4RnZvZ2JEdExjR2hrb05FbGpVUCtHZ2xraTF5a01qWFc4OWhyUER6cG53dlZQZUhHdnJxTHBKSW1ITHQ
+0NTdUOXdFVU5nNE05VStadUo2dS80eEhkVzJzNUdXZVg5SC9OLy8tLVFRKzc3cHB2UWlKM3FOckM2S3h
+jZHc9PQ%3D%3D--3ab5702185dca000cff025fd3139348147171c34; path=/; HttpOnly
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Request-Id: a5efa267-3f9a-40ff-9a8d-49bfa8754c62
+X-Runtime: 0.050191
+X-Ua-Compatible: chrome=1
+X-Xss-Protection: 1; mode=block
+transfer-encoding: chunked
+Connection: keep-alive
+With this headers file now saved, we can pass it around to subsequent requests and the server will have access to the session cookie that it needs, along with all of the original headers that were part of the response.
+
+In order to pass the headers file back to the server with our request, we need to use the -b flag.
+
+$ curl -b headers quiet-waters-1228.herokuapp.com/whoami
+By passing the -b flag and giving it the name of the file that we had previously saved, Listing 3.22 shows that we have successfully accessed the end point that was previously unavailable to us.
+
+Listing 3.22
+{
+   "password" : "password1",
+   "name" : "User 1",
+   "id" : 1,
+   "username" : "user1"
+}
+3.8.1 Using the Cookie Jar (-c)
+
+When using the –dump-header flag we not only capture the cookies from a response, but also all of the headers from that response. This may or may not be what you want.
+
+curl has a built-in cookie jar meant for storing just the cookies and sending them back to the server.
+
+To store cookies in the cookie jar we use the -c flag and give it the name of a file we wish to store the cookies in.
+
+$ curl -X POST -c cookies.txt -u "user1:password1" \
+  quiet-waters-1228.herokuapp.com/login
+Listing 3.23
+{"id":1,"name":"User 1","password":"password1","username":"user1"}
+As we can see in Listing 3.23 we get a successful response, just as we did when we used the –dump-header flag.
+
+If we use the cat command (Chapter 9 Section 9.2) we can look at the contents of the cookies.txt file.
+
+$ cat cookies.txt
+Listing 3.24
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/docs/http-cookies.html
+# This file was generated by libcurl! Edit at your own risk.
+
+#HttpOnly_quiet-waters-1228.herokuapp.com FALSE / FALSE 0 _curl_test_app_rails_
+session cm53d2RJN1VncVpnK3psVUpuRHB2L2d3emIyTENIMGhBVjlPOHozM0lJYmk2WmwrSGZEbEV
+UbXpnSkdGaktvZjVFeThranhuSi9HZm9YTHFSYUthUzhoVUc0T3J3MEltempsNC96UVFweXMranlsem
+RPMzNYSmxzK2pJME5DMEItLWVkSDZZN0pjdU5HTmt5WHRxTW1vSUE9PQ%3D%3D--06137b60e0ff66f
+3a6cad05e4fe83a0094a989be
+When we look at the cookies.txt file in Listing 3.24 we see that this time we are only storing the cookies from the response, and not the headers as well.
+
+Using the -b flag, as we did earlier, we can send the contents of the cookies.txt file to the server with the request.
+
+$ curl -b cookies.txt quiet-waters-1228.herokuapp.com/whoami
+Listing 3.25
+{
+   "password" : "password1",
+   "name" : "User 1",
+   "id" : 1,
+   "username" : "user1"
+}
+Listing 3.25 shows that we get a successful response from the server when passing cookies.txt to it.
+
+3.9 Conclusion
+
+As you can see, cURL is an incredibly powerful tool. We have used it to download files, upload files, access authenticated pages, and more. This is a very small amount of the features that are available in cURL.
+
+The MAN page for cURL is very long, and for a very good reason. The list of options that can be passed is dizzying. Hopefully this chapter has given you the building blocks for using cURL on a daily basis.

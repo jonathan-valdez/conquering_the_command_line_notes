@@ -1,0 +1,356 @@
+Ps.txt
+
+Understanding what the processes running on our computers are doing is important. Which processes are using the most memory? Which are using the most CPU? These are important questions, along with how to find a particular process.
+
+The ps command helps us to answer all of these questions. Its output can often be confusing, as well as its myriad of options and flags. In this chapter we’ll look, as we have been doing with commands in the previous chapters, at the most useful flags and options to use with ps. We’ll also learn how to interpret the most important parts of ps output.
+
+One thing to note before we start looking at code examples in this chapter, is that your results will vary from mine. These are the processes that are running on my computer, which is running Mac OS X, at the time of writing. They will be different from yours, and unfortunately there is not much we can do to change that - so please keep that in mind when your output is different.
+
+6.1 The Basics
+
+Let’s start by simply running the command and see output we get.
+
+$ ps
+Listing 6.1
+  PID TTY           TIME CMD
+24696 ttys000    0:00.19 -bash
+24697 ttys001    0:00.16 -bash
+24715 ttys002    0:00.14 -bash
+24721 ttys003    0:00.15 -bash
+24703 ttys004    0:00.15 -bash
+21686 ttys005    0:00.04 ruby /Users/markbates/scripts/ss
+21690 ttys005    0:00.38 forego start -p 3000
+24755 ttys005    0:00.19 -bash
+24851 ttys006    0:00.69 -bash
+25865 ttys007    0:00.22 -bash
+25876 ttys008    0:00.10 -bash
+According to Listing 6.1 I am running a bunch of bash terminal windows, one ruby process, and one forego process.
+
+You might be wondering where the rest of the processes running on my computer are. It’s a valid question. In this day and age there’s no way I only have nine processes running on my machine.
+
+When the ps command is run without any arguments, it will return results for the processes that belong to the current user, me, that are associated with the same terminal in which the ps command is run. Later in this chapter we will look at how to find the rest of the processes currently running.
+
+6.1.1 Columns
+
+Let’s quickly examine the output of Listing 6.1 and look at the different columns of data that were printed out:
+
+Column	Definition
+PID	The process ID of the process.
+TTY1	The controlling terminal for the process.
+TIME	The cumulative CPU time the process has used since the process started. The format for this time is [ dd-]hh:mm:ss.
+CMD	The name of the command that is running
+6.2 Display User-Oriented Output (u)
+
+The ps command has a flag, u, that will display common useful information, such as CPU and memory usage. It should be quickly noted that this flag, unfortunately does not work with the rest of the flags in this chapter. Where possible I will note alternative flags in other sections that are compatible with this flag.
+
+$ ps u
+Listing 6.2
+USER        PID  %CPU %MEM      VSZ    RSS   TT  STAT STARTED      TIME COMMAND
+markbates 57896   0.0  0.0  4529729   2720 s005  S+   10:27AM   0:00.38
+  forego start -p 3000
+markbates 57892   0.0  0.0  2465360   7636 s005  S+   10:27AM   0:00.04
+  ruby /Users/markbates/scripts/ss
+markbates 25876   0.0  0.0  2489688   2400 s008  S+   Sat10AM   0:00.10 -bash
+markbates 25865   0.0  0.0  2497880   2040 s007  S+   Sat10AM   0:00.22 -bash
+markbates 24851   0.0  0.0  2497880   3392 s006  S+   Sat10AM   0:00.69 -bash
+markbates 24755   0.0  0.0  2497880   2004 s005  S    Sat10AM   0:00.21 -bash
+markbates 24721   0.0  0.0  2497880   2136 s003  S+   Sat10AM   0:00.15 -bash
+markbates 24715   0.0  0.0  2497880   1552 s002  S+   Sat10AM   0:00.14 -bash
+markbates 24703   0.0  0.0  2497880   1424 s004  S+   Sat10AM   0:00.15 -bash
+markbates 24697   0.0  0.0  2497880   1948 s001  S+   Sat10AM   0:00.16 -bash
+markbates 24696   0.0  0.0  2497880   2396 s000  S+   Sat10AM   0:00.32 -bash
+As we can see in Listing 6.22 we are getting information about the same processes that we saw in Listing 6.1, but now we are seeing more information about those processes.
+
+6.2.1 Columns
+
+Let’s look at the additional columns that the u flag gave us.
+
+Column	Definition
+USER	The user that the process is running under.
+%CPU	The percentage of time the process has used the CPU since the process started.
+%MEM	The percentage of real memory used by this process.
+VSZ	Indicates, as a decimal integer, the size in kilobytes of the process in virtual memory.
+RSS	The real-memory size of the process (in 1 KB units).
+STAT	The status of the process.
+STARTED	When the process was started.
+The view of the data presented by the u flag is commonly referred to as “user-oriented” output. The reason for this is simple - this default set of data is going to be the information you’ll need most often.
+
+6.3 Display All Processes (-e)
+
+Up until now we have only been getting information about processes that are being run in a terminal window controlled by us. There are a lot of other processes running on a modern machine, and to access those we can use the -e flag.
+
+$ ps -e
+Listing 6.3
+  PID TTY           TIME CMD
+    1 ??        28:22.66 /sbin/launchd
+   17 ??         1:19.09 /usr/libexec/UserEventAgent (System)
+   18 ??         0:17.57 /usr/libexec/kextd
+   19 ??         0:36.91 /usr/libexec/taskgated -s
+   20 ??         0:25.96 /usr/sbin/notifyd
+   21 ??         0:19.43 /usr/sbin/securityd -i
+   22 ??         0:17.15 /usr/libexec/diskarbitrationd
+   23 ??         0:21.38 /System/Library/CoreServices/powerd.bundle/powerd
+   24 ??         5:13.79 /usr/libexec/configd
+   25 ??         1:01.05 /usr/sbin/syslogd
+  ...
+24703 ttys004    0:00.15 -bash
+24743 ttys005    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin...
+24755 ttys005    0:00.21 -bash
+57892 ttys005    0:00.04 ruby /Users/markbates/scripts/ss
+57896 ttys005    0:00.42 forego start -p 3000
+24810 ttys006    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin...
+24851 ttys006    0:00.70 -bash
+25864 ttys007    0:00.01 login -pfl markbates /bin/bash -c exec -la bash /bin...
+25865 ttys007    0:00.24 -bash
+25866 ttys008    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin...
+25876 ttys008    0:00.10 -bash
+Although Listing 6.33 has been truncated, you can see that we now have a mix of “system” processes as well as “user” processes.
+
+If you want to use a syntax that’s similar to the u flag from Section 6.2, you can substitute ax for the -e flag. Although you will get slightly different columns presented, the listing of processes should be identical.
+
+Listing 6.44 shows using the ax flag instead of the -e flag.
+
+$ ps ax
+Listing 6.4
+  PID   TT  STAT      TIME COMMAND
+    1   ??  Ss    28:34.79 /sbin/launchd
+   17   ??  Ss     1:19.61 /usr/libexec/UserEventAgent (System)
+   18   ??  Ss     0:17.63 /usr/libexec/kextd
+   19   ??  Ss     0:37.35 /usr/libexec/taskgated -s
+   20   ??  Ss     0:26.22 /usr/sbin/notifyd
+   21   ??  Ss     0:19.52 /usr/sbin/securityd -i
+   22   ??  Ss     0:17.24 /usr/libexec/diskarbitrationd
+   23   ??  Ss     0:21.71 /System/Library/CoreServices/powerd.bundle/powerd
+   24   ??  Us     5:15.98 /usr/libexec/configd
+   25   ??  Ss     1:01.66 /usr/sbin/syslogd
+  ...
+24703 s004  S+     0:00.15 -bash
+24743 s005  Ss     0:00.02 login -pfl markbates /bin/bash -c exec -la bash /b...
+24755 s005  S      0:00.21 -bash
+57892 s005  S+     0:00.04 ruby /Users/markbates/scripts/ss
+57896 s005  S+     0:00.43 forego start -p 3000
+24810 s006  Ss     0:00.02 login -pfl markbates /bin/bash -c exec -la bash /b...
+24851 s006  S+     0:00.71 -bash
+25864 s007  Ss     0:00.01 login -pfl markbates /bin/bash -c exec -la bash /b...
+25865 s007  S+     0:00.31 -bash
+25866 s008  Ss     0:00.02 login -pfl markbates /bin/bash -c exec -la bash /b...
+25876 s008  S+     0:00.10 -bash
+6.4 Display Processes by User (-U)
+
+The ps command has a lot of filtering options built into it. One of the most useful ones is the ability to filter for processes by the user that is running them.
+
+The -U flag will filter the results to show only processes that are being run by the user ID provided.
+
+$ ps -U root
+Listing 6.5
+  PID TTY           TIME CMD
+    1 ??        28:36.67 /sbin/launchd
+   17 ??         1:19.66 /usr/libexec/UserEventAgent (System)
+   18 ??         0:17.63 /usr/libexec/kextd
+   19 ??         0:37.49 /usr/libexec/taskgated -s
+   20 ??         0:26.29 /usr/sbin/notifyd
+   21 ??         0:19.52 /usr/sbin/securityd -i
+   22 ??         0:17.24 /usr/libexec/diskarbitrationd
+   23 ??         0:21.76 /System/Library/CoreServices/powerd.bundle/powerd
+   24 ??         5:16.27 /usr/libexec/configd
+   25 ??         1:01.75 /usr/sbin/syslogd
+  ...
+  866 ??         0:00.06 /System/Library/Frameworks/CoreServices.framework/...
+ 1000 ??         0:18.78 /usr/libexec/systemstatsd
+ 2065 ??         0:00.53 /System/Library/Filesystems/AppleShare/check_afp.app/...
+ 4804 ??         0:00.01 /usr/libexec/periodic-wrapper daily
+15536 ??         0:00.00 /usr/sbin/aslmanager -s /var/log/eventmonitor
+15537 ??         0:00.00 /usr/sbin/aslmanager -s /var/log/performance
+26161 ??         0:00.76 /System/Library/Frameworks/CoreMediaIO.framework/...
+26865 ??         0:00.01 com.apple.cmio.registerassistantservice
+33266 ??         0:01.57 /usr/libexec/syspolicyd
+64100 ??         0:00.12 /usr/sbin/ocspd
+66252 ??         0:00.00 /usr/libexec/periodic-wrapper weekly
+Compare Listing 6.55 and Listing 6.66 and you can see the different processes associated with each user.
+
+$ ps -U markbates
+Listing 6.6
+  PID TTY           TIME CMD
+  351 ??         0:23.19 /sbin/launchd
+  355 ??         0:10.19 /usr/libexec/UserEventAgent (Aqua)
+  356 ??         1:45.54 /usr/sbin/distnoted agent
+  359 ??         0:17.99 /usr/sbin/cfprefsd agent
+  366 ??         0:55.47 /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock
+  367 ??         6:17.86 /System/Library/CoreServices/SystemUIServer.app/...
+  368 ??         2:29.01 /System/Library/CoreServices/Finder.app/Contents/...
+  371 ??         0:05.79 /usr/libexec/xpcd
+  372 ??         0:04.46 /usr/libexec/sharingd
+  373 ??         0:00.01 /usr/sbin/pboard
+  374 ??         0:01.76 /System/Library/PrivateFrameworks/TCC.framework/...
+  ...
+24698 ttys004    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin/bash
+24703 ttys004    0:00.15 -bash
+24743 ttys005    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin/bash
+24755 ttys005    0:00.21 -bash
+57892 ttys005    0:00.04 ruby /Users/markbates/scripts/ss
+57896 ttys005    0:00.43 forego start -p 3000
+24810 ttys006    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin/bash
+24851 ttys006    0:00.72 -bash
+25864 ttys007    0:00.01 login -pfl markbates /bin/bash -c exec -la bash /bin/bash
+25865 ttys007    0:00.31 -bash
+25866 ttys008    0:00.02 login -pfl markbates /bin/bash -c exec -la bash /bin/bash
+25876 ttys008    0:00.10 -bash
+On a typical development machine there are probably only two users, you and the root user. However, on a complex server setup, there might be several users, and this is a great way to be able to scope your process search to those users.
+
+6.5 Customize Displayed Columns (-O, -L)
+
+We can easily customize ps to display a host of different column information using the -L and -O flags.
+
+To get a list of the available columns that can be displayed with ps we can use the -L flag.
+
+$ ps -L
+Column	Description
+%cpu	percentage CPU usage (alias pcpu)
+%mem	percentage memory usage (alias pmem)
+acflag	accounting flag (alias acflg)
+args	command and arguments
+comm	command
+command	command and arguments
+cpu	short-term CPU usage factor (for scheduling)
+etime	elapsed running time
+flags	the process flags, in hexadecimal (alias f)
+gid	processes group id (alias group)
+inblk	total blocks read (alias inblock)
+jobc	job control count
+ktrace	tracing flags
+ktracep	tracing vnode
+lim	memoryuse limit
+logname	login name of user who started the session
+lstart	time started
+majflt	total page faults
+minflt	total page reclaims
+msgrcv	total messages received (reads from pipes/sockets)
+msgsnd	total messages sent (writes on pipes/sockets)
+nice	nice value (alias ni)
+nivcsw	total involuntary context switches
+nsigs	total signals taken (alias nsignals)
+nswap	total swaps in/out
+nvcsw	total voluntary context switches
+nwchan	wait channel (as an address)
+oublk	total blocks written (alias oublock)
+p_ru	resource usage (valid only for zombie)
+paddr	swap address
+pagein	pageins (same as majflt)
+pgid	process group number
+pid	process ID
+ppid	parent process ID
+pri	scheduling priority
+re	core residency time (in seconds; 127 = infinity)
+rgid	real group ID
+rss	resident set size
+ruid	real user ID
+ruser	user name (from ruid)
+sess	session ID
+sig	pending signals (alias pending)
+sigmask	blocked signals (alias blocked)
+sl	sleep time (in seconds; 127 = infinity)
+start	time started
+state	symbolic process state (alias stat)
+svgid	saved gid from a setgid executable
+svuid	saved UID from a setuid executable
+tdev	control terminal device number
+time	accumulated CPU time, user + system (alias cputime)
+tpgid	control terminal process group ID
+tsess	control terminal session ID
+tsiz	text size (in Kbytes)
+tt	control terminal name (two letter abbreviation)
+tty	full name of control terminal
+ucomm	name to be used for accounting
+uid	effective user ID
+upr	scheduling priority on return from system call (alias usrpri)
+user	user name (from UID)
+utime	user CPU time (alias putime)
+vsz	virtual size in Kbytes (alias vsize)
+wchan	wait channel (as a symbolic name)
+wq	total number of workqueue threads
+wqb	number of blocked workqueue threads
+wqr	number of running workqueue threads
+wql	workqueue limit status (C = constrained thread limit, T = total thread limit)
+xstat	exit or stop status (valid only for stopped or zombie process)
+Signal Definitions for ps -l
+We can use a few of the columns from Table 6.57 to display information such as the elapsed time (etime), the current CPU usage (%cpu), and the current memory usage (%mem).
+
+By passing the column names to the -O flag as a comma separated list, we get the results we see in Listing 6.7.
+
+$ ps -O etime,%cpu,%mem
+Listing 6.7
+  PID     ELAPSED  %CPU %MEM   TT  STAT      TIME COMMAND
+24696 03-06:31:19   0.0  0.0 s000  S+     0:00.34 -bash
+24697 03-06:31:19   0.0  0.0 s001  S+     0:00.16 -bash
+24715 03-06:31:19   0.0  0.0 s002  S+     0:00.14 -bash
+24721 03-06:31:19   0.0  0.0 s003  S+     0:00.22 -bash
+24703 03-06:31:19   0.0  0.0 s004  S+     0:00.15 -bash
+24755 03-06:31:19   0.0  0.0 s005  S      0:00.21 -bash
+57892    06:11:07   0.0  0.0 s005  S+     0:00.04 ruby /Users/markbates/scripts/ss
+57896    06:11:07   0.0  0.0 s005  S+     0:00.46 forego start -p 3000
+24851 03-06:31:19   0.0  0.0 s006  S+     0:00.72 -bash
+25865 03-06:31:19   0.0  0.0 s007  S+     0:00.31 -bash
+25876 03-06:31:19   0.0  0.0 s008  S+     0:00.14 -bash
+It’s important to note that when we look at things like current CPU and memory usage with ps, they are static snapshots of those numbers at that moment in time. They are not “live” numbers that will continue to update in real-time. Should you need real-time data, you might consider using the top command instead.
+
+6.6 Sorting
+
+The ps command gives us a few different ways to sort the results we get. Two of the more useful ones are the -m flag, which sorts by memory usage, and the -r flag, that sorts by CPU usage.
+
+While looking at both of these examples, we’ll use the -u flag that we learned about in Section 6.4 to scope results to the root user. We’ll also use the -O flag we saw in Section 6.5 to display either memory or CPU usage.
+
+6.6.1 Sort by Memory Usage (-m)
+
+Using the -m flag we can sort processes by their memory usage.
+
+$ ps -m -O %mem -u root
+Listing 6.8
+  PID %MEM   TT  STAT      TIME COMMAND
+  154  1.5   ??  Ss    66:49.98 /System/Library/Frameworks/ApplicationServices...
+  174  1.0   ??  Ss    29:44.90 /System/Library/Frameworks/CoreServices.framew...
+  100  0.4   ??  Ss    49:42.27 /System/Library/Frameworks/CoreServices.framew...
+70322  0.3   ??  Ss     0:04.58 /System/Library/PrivateFrameworks/PackageKit.f...
+  128  0.3   ??  Ss   650:05.90 /Applications/Leap Motion.app/Contents/MacOS/l...
+ 5835  0.2   ??  Ss     0:01.46 /usr/sbin/ocspd
+  115  0.2   ??  Ss     1:46.32 /System/Library/CoreServices/launchservicesd
+  103  0.1   ??  Ss     0:16.27 /System/Library/CoreServices/loginwindow.app/C...
+  337  0.1   ??  S     29:54.94 /Library/Parallels/Parallels Service.app/Conte...
+   51  0.1   ??  Ss    11:47.34 /System/Library/Frameworks/CoreServices.framew...
+   17  0.1   ??  Ss     1:41.91 /usr/libexec/UserEventAgent (System)
+   28  0.1   ??  Ss     2:14.83 /usr/libexec/opendirectoryd
+   86  0.1   ??  SNs    0:38.33 /usr/libexec/warmd
+   32  0.1   ??  Ss     1:17.58 /System/Library/CoreServices/coreservicesd
+26161  0.1   ??  Ss     0:00.96 /System/Library/Frameworks/CoreMediaIO.framewo...
+  349  0.1   ??  Ss     0:01.04 /System/Library/PrivateFrameworks/SoftwareUpda...
+   19  0.0   ??  Ss     0:48.08 /usr/libexec/taskgated -s
+...
+Listing 6.88 shows the top processes for the root user, sorted by their memory usage.
+
+6.6.2 Sort by CPU Usage (-r)
+
+The -r flag will allows us to sort processes by their CPU usage.
+
+$ ps -r -O %cpu -u root
+Listing 6.9
+  PID  %CPU   TT  STAT      TIME COMMAND
+  130  50.6   ??  SNs  2303:23.91 /usr/bin/java -Dapp=CrashPlanService -Xmn10m...
+  128  41.2   ??  Rs   656:28.86 /Applications/Leap Motion.app/Contents/MacOS/...
+  154   3.0   ??  Us    68:09.18 /System/Library/Frameworks/ApplicationService...
+  115   2.3   ??  Ss     2:16.12 /System/Library/CoreServices/launchservicesd
+  337   1.7   ??  S     30:55.44 /Library/Parallels/Parallels Service.app/Cont...
+   32   1.1   ??  Ss     1:39.38 /System/Library/CoreServices/coreservicesd
+   23   0.4   ??  Ss     0:30.84 /System/Library/CoreServices/powerd.bundle/po...
+  100   0.3   ??  Ss    51:01.97 /System/Library/Frameworks/CoreServices.frame...
+   25   0.3   ??  Ss     1:24.04 /usr/sbin/syslogd
+   19   0.2   ??  Ss     0:51.95 /usr/libexec/taskgated -s
+   51   0.1   ??  Ss    12:20.59 /System/Library/Frameworks/CoreServices.frame...
+  174   0.1   ??  Ss    30:38.53 /System/Library/Frameworks/CoreServices.frame...
+  864   0.0   ??  Ss     0:00.06 /sbin/launchd
+...
+Listing 6.99 shows the top processes for the root user, sorted by their CPU usage.
+
+6.7 Conclusion
+
+The ps command is one of those commands that you’ll use almost daily. With the numerous ways you can sort, filter, and present processes, it is easy to find the process information you are looking for.
+
+I would also recommend checking out Chapter 2 Section 2.7 to see how to combine ps with Ack or Ag to find the exact process you are looking for. Alternatively, you can find the same example, this time using grep, in Chapter 5 Section 5.3.

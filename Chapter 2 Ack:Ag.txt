@@ -1,0 +1,395 @@
+Chapter 2
+Ack/Ag
+
+
+ the first argument we pass in is the search term we want to find in our directory of files. By default, this query is run recursively against the current directory.
+
+ Should we want to specify a path to search against, we can pass in a final argument. For example, if we just wanted to search within the guides directory, we can modify our query to look like this:
+
+ $ ag DHH guides/
+
+ Our result will now be scoped to just that directory as seen in Listing 2.22
+
+Listing 2.2
+guides/source/caching_with_rails.md
+33:INFO: Page Caching has been removed from Rails 4. ...
+39:INFO: Action Caching has been removed from Rails 4. ...
+
+guides/source/migrations.md
+109:`YYYYMMDDHHMMSS_create_products.rb`, that is to say a UTC timestamp
+227:`db/migrate/YYYYMMDDHHMMSS_add_details_to_products.rb` file.
+
+2.2.1 Regular Expression Searches
+
+Both Ack and Ag support a limited subset of regular expression syntax. This can be incredibly useful for crafting more fine-grained search queries.
+
+Let’s search for any occurrence of the word readme at the end of a line.
+
+$ ag readme$
+Listing 2.3 lists the results of our successful query.
+
+Listing 2.3
+railties/lib/rails/generators/rails/app/app_generator.rb
+40:    def readme
+
+railties/lib/rails/generators/rails/plugin/plugin_generator.rb
+32:    def readme
+
+railties/test/generators/actions_test.rb
+203:  def test_readme
+
+2.2.2 Literal Expression Searches
+
+Both Ack and Ag treat the search term as a regular expression by default. This means that if we were to search for the pattern .rb it would match any single character followed by rb. This might not be what we want. Let’s search for .rb in the railties/CHANGELOG.md file.
+
+$ ag .rb railties/CHANGELOG.md
+
+Listing 2.4
+70:*   Rename `commands/plugin_new.rb` to `commands/plugin.rb` ...
+78:*   Omit turbolinks configuration completely on skip_javascript ...
+103:*   Changes repetitive th tags to use colspan attribute ...
+
+Listing 2.4 lists the results3 of our query. Since Ag matches the pattern as a regular expression, our results includes some things we don’t want, such as turbolinks.
+
+To fix this we can change our query to the use -Q flag. This will search for the exact pattern, .rb, in the file.
+
+$ ag -Q .rb railties/CHANGELOG.md
+
+Listing 2.5 lists the results4 of our successful query.
+
+Listing 2.5
+70:*   Rename `commands/plugin_new.rb` to `commands/plugin.rb` ...
+
+While regular expressions are somewhat outside the scope of this book, Mastering Regular Expressions is an excellent resource if you need to learn more. If you prefer interactive tutorials, RegexOne provides a great walk-through.
+
+2.3 Listing Files (-l)
+
+By default, when performing a search with Ag or Ack, the results include the line number as well as the line where the term was found.
+
+This level of detail is incredibly useful in a lot of cases, but what if we really just want to see a list of the file names, without seeing the context in which the term was found? The -l flag can help us with this.
+
+$ ag DHH -l
+The result set is now presented as just a list of files, Listing 2.6.
+
+Listing 2.6
+actionview/lib/action_view/helpers/atom_feed_helper.rb
+actionview/test/template/atom_feed_helper_test.rb
+activerecord/CHANGELOG.md
+activerecord/lib/active_record/relation.rb
+activerecord/lib/active_record/relation/query_methods.rb
+activerecord/test/cases/xml_serialization_test.rb
+activesupport/CHANGELOG.md
+guides/source/caching_with_rails.md
+guides/source/migrations.md
+
+The list of files presented to us is now a little bit more manageable and can give us a much better sense of the number of files that are in the result set for our query.
+
+2.4 Case Insensitive Searches (-i)
+
+By default, all search queries are case sensitive, but we can easily change that using the -i flag.
+
+To demonstrate this, let’s change our search query. This time, we’ll search for the term readme. We’ll also use the -l flag that we learned about earlier to keep our result set easier to read.
+
+$ ag readme -l
+
+You can see the results of our query in Listing 2.7.
+
+Listing 2.7
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/lib/rails/generators/actions.rb
+railties/lib/rails/generators/app_base.rb
+railties/lib/rails/generators/rails/app/app_generator.rb
+railties/lib/rails/generators/rails/plugin/plugin_generator.rb
+railties/test/generators/actions_test.rb
+
+Now let’s add the -i flag to our query and see how that changes our result set.
+
+$ ag readme -l -i
+
+Listing 2.8 shows the results of adding the -i flag to our search query.
+
+Listing 2.8
+actionmailer/actionmailer.gemspec
+actionpack/actionpack.gemspec
+actionpack/test/controller/action_pack_assertions_test.rb
+actionview/actionview.gemspec
+activemodel/activemodel.gemspec
+activerecord/activerecord.gemspec
+activerecord/lib/active_record/base.rb
+activesupport/activesupport.gemspec
+guides/code/getting_started/Gemfile
+guides/code/getting_started/README.rdoc
+guides/source/command_line.md
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+guides/source/plugins.md
+guides/source/rails_application_templates.md
+guides/source/working_with_javascript_in_rails.md
+rails.gemspec
+railties/lib/rails/api/task.rb
+railties/lib/rails/generators/actions.rb
+railties/lib/rails/generators/app_base.rb
+railties/lib/rails/generators/rails/app/app_generator.rb
+railties/lib/rails/generators/rails/app/templates/README.rdoc
+railties/lib/rails/generators/rails/app/USAGE
+railties/lib/rails/generators/rails/plugin/plugin_generator.rb
+railties/lib/rails/generators/rails/plugin/templates/%name%.gemspec
+railties/lib/rails/generators/rails/plugin/templates/rails/javascripts.js
+railties/lib/rails/generators/rails/plugin/templates/Rakefile
+railties/lib/rails/generators/rails/plugin/USAGE
+railties/lib/rails/tasks/documentation.rake
+railties/railties.gemspec
+railties/RDOC_MAIN.rdoc
+railties/test/generators/actions_test.rb
+railties/test/generators/app_generator_test.rb
+railties/test/generators/plugin_generator_test.rb
+README.md
+
+As you can see, ag returns significantly more files now using a case insensitive search.
+
+2.5 Scoping to Files (-G)
+
+Quite often, we will want to search only within certain file types, or within files that have a specific file extension. To accomplish this we can use the -G flag5.
+
+Let’s once again search for readme in our code base, but this time we’ll limit our search results to filenames that contain the word action.
+
+$ ag readme -l -G action
+
+As you can see in Listing 2.9 we have significantly reduced the number of files that are returned as the result of our query.
+
+Listing 2.9
+railties/lib/rails/generators/actions.rb
+railties/test/generators/actions_test.rb
+
+Let’s modify our query slightly and search for files that end with ec.
+
+$ ag readme -l -i -G ec
+
+As Listing 2.10 shows us, we don’t quite have our query tuned the way we want it, since it also returned files like activerecord/lib/active_record/base.rb, matching the ec in record.
+
+Listing 2.10
+actionmailer/actionmailer.gemspec
+actionpack/actionpack.gemspec
+actionview/actionview.gemspec
+activemodel/activemodel.gemspec
+activerecord/activerecord.gemspec
+activerecord/lib/active_record/base.rb
+activesupport/activesupport.gemspec
+rails.gemspec
+railties/lib/rails/generators/rails/plugin/templates/%name%.gemspec
+railties/railties.gemspec
+
+Instead of finding files that end in ec, the search results are showing us files that contain ec anywhere in the name. How do we fix our query to get back the results we want?
+
+The -G flag allows us to pass in basic regular expressions, so we can easily modify our search query to improve the results. For those unfamiliar with regular expressions, we can use the $ to indicate that we only want to match filenames that end with ec.
+
+Listing 2.11
+actionmailer/actionmailer.gemspec
+actionpack/actionpack.gemspec
+actionview/actionview.gemspec
+activemodel/activemodel.gemspec
+activerecord/activerecord.gemspec
+activesupport/activesupport.gemspec
+rails.gemspec
+railties/lib/rails/generators/rails/plugin/templates/%name%.gemspec
+railties/railties.gemspec
+As you can see in Listing 2.11 our search results now only contain files that end with ec. Success!
+
+2.6 Ignoring Paths
+
+Another important way to filter our search results is to ignore certain directories that we don’t care about. Both Ack and Ag have a few useful features that help us to do just that.
+
+2.6.1 The –ignore-dir Flag
+
+Let’s start with this query and it’s result set, Listing 2.12
+
+$ ag readme -l
+
+Listing 2.12
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/lib/rails/generators/actions.rb
+railties/lib/rails/generators/app_base.rb
+railties/lib/rails/generators/rails/app/app_generator.rb
+railties/lib/rails/generators/rails/plugin/plugin_generator.rb
+railties/test/generators/actions_test.rb
+What if we aren’t interested in seeing any results from the railties/lib directory? To solve that problem we can use the –ignore-dir flag.
+
+$ ag readme -l --ignore-dir=railties/lib
+
+Listing 2.13 shows that we have successfully filtered out those files. All results from files located in that directory will be omitted.
+
+Listing 2.13
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/test/generators/actions_test.rb
+We can easily chain multiple –ignore-dir calls together to filter our results further.
+
+$ ag readme -l --ignore-dir=railties/lib --ignore-dir=guides/code
+See Listing 2.14 for the results of using multiple ignore flags.
+
+2.6 Ignoring Paths
+
+Another important way to filter our search results is to ignore certain directories that we don’t care about. Both Ack and Ag have a few useful features that help us to do just that.
+
+2.6.1 The –ignore-dir Flag
+
+Let’s start with this query and it’s result set, Listing 2.12
+
+$ ag readme -l
+Listing 2.12
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/lib/rails/generators/actions.rb
+railties/lib/rails/generators/app_base.rb
+railties/lib/rails/generators/rails/app/app_generator.rb
+railties/lib/rails/generators/rails/plugin/plugin_generator.rb
+railties/test/generators/actions_test.rb
+What if we aren’t interested in seeing any results from the railties/lib directory? To solve that problem we can use the –ignore-dir flag.
+
+$ ag readme -l --ignore-dir=railties/lib
+
+Listing 2.13 shows that we have successfully filtered out those files. All results from files located in that directory will be omitted.
+
+Listing 2.13
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/test/generators/actions_test.rb
+We can easily chain multiple –ignore-dir calls together to filter our results further.
+
+$ ag readme -l --ignore-dir=railties/lib --ignore-dir=guides/code
+See Listing 2.14 for the results of using multiple ignore flags.
+
+Listing 2.14
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/test/generators/actions_test.rb
+Despite its name, the –ignore-dir flag will also let us filter out particular files, not just directories.
+
+$ ag readme -l --ignore-dir="*.rb"
+Listing 2.15
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+In Listing 2.15 we, again searched for the term readme, except this time we ignored all files that matched the pattern *.rb.
+
+2.6.2 VCS Ignore Files (Ag only)
+
+Ag has an important feature that distinguishes it from Ack. It will automatically read in VCS (version control system) files, such as .gitignore for Git, and filter out files from the result set based on the content of those files. For the uninitiated, the .gitignore file tells git what files should not be tracked by source control.
+
+As an example, the Rails source code already has a .gitignore file, so let’s add the railties/lib and guides/code directories to it so the file now looks Listing 2.16.
+
+Listing 2.16
+debug.log
+.Gemfile
+/.bundle
+/.ruby-version
+/Gemfile.lock
+pkg
+/dist
+/doc/rdoc
+/*/doc
+/*/test/tmp
+/activerecord/sqlnet.log
+/activemodel/test/fixtures/fixture_database.sqlite3
+/activesupport/test/fixtures/isolation_test
+/railties/test/500.html
+/railties/test/fixtures/tmp
+/railties/test/initializer/root/log
+/railties/doc
+/railties/tmp
+/guides/output
+railties/lib
+guides/code
+Now if we were to run the same query, but without the –ignore-dir flags, as shown in Listing 2.17, ag would return the same results as Listing 2.14, but with significantly less typing.
+
+$ ag readme -l
+Listing 2.17
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/test/generators/actions_test.rb
+Of course, there might be times when you don’t want to use this feature. Thankfully, there is a flag we can pass to Ag to tell it to ignore any VCS files.
+
+$ ag readme -l --skip-vcs-ignores
+Using the –skip-vcs-ignores flag we are able to get the original results of our query, as seen in Listing 2.18
+
+Listing 2.18
+guides/code/getting_started/Gemfile
+guides/source/asset_pipeline.md
+guides/source/generators.md
+guides/source/getting_started.md
+railties/lib/rails/generators/actions.rb
+railties/lib/rails/generators/app_base.rb
+railties/lib/rails/generators/rails/app/app_generator.rb
+railties/lib/rails/generators/rails/plugin/plugin_generator.rb
+railties/test/generators/actions_test.rb
+The –skip-vcs-ignores flag will skip the following files; .gitignore, .hgignore, .svnignore. It will, however, continue to read the .agignore file, which we’ll learn about in the next section.
+
+2.6.3 The .agignore File (Ag only)
+
+The .agignore file specifies ignore paths for Ag, and works independently of any VCS file.
+
+Listing 2.19
+railties/lib
+guides/code
+This lets us keep our VCS ignore files focused on what can/can’t be committed to source control, while still being able to give Ag direction as to which paths we want to exclude from search.
+
+2.6.4 The .ackrc File (Ack only)
+
+The .ackrc is identical in nature to the .agignore file, but is for use with Ack, instead of Ag.
+
+
+2.7 Searching from Standard Input
+
+Both Ack and Ag will expect standard input as a source for searching. This means we don’t need to just search files, but we can use other commands to provide the data we’ll search over.
+
+For example, we can use the ps command from Chapter 6 to get a list of all of the processes running on our machine, and then search for a specific command using either Ack or Ag.
+
+$ ps -e | ag forego
+Listing 2.20
+58627 ttys005    0:00.91 forego start -p 3000
+In Listing 2.20 we search through all of the running processes to find one that contains the term forego.
+
+This ability is incredibly useful, not just for finding things such as running processes, but for reading file input from a command such as cat, Chapter 9 Section 9.2, amongst other uses.
+
+An alternative way to do this same search would be to use the grep command, Chapter 5 Section 5.3.
+
+2.8 Performance
+
+Earlier in this chapter I mentioned how I prefer Ag over Ack because of its speed. Let me demonstrate what I mean. Let’s benchmark two pretty simple queries using the two different tools.
+
+$ time ack DHH
+
+real  0m0.981s
+user  0m0.828s
+sys   0m0.149s
+$ time ag DHH
+
+real  0m0.086s
+user  0m0.059s
+sys   0m0.142s
+I think you would agree with me when I say that Ag is significantly faster than Ack.
+
+2.9 Conclusion
+
+Well, that’s a good look at what Ack and Ag can do to help us quickly search through large code bases.
+
+Both pieces of software are capable of much, much more! I have only scratched the surface of their feature sets in keeping with the spirit of this book.
+
+Both tools will give you a print out of their full features if you simply call them without any parameters.
+

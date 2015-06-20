@@ -1,0 +1,258 @@
+Chapter 7 Sed.txt
+
+sed is a stream editor that lets you quickly edit files or streams using pattern matching and replacements.
+
+The sed command can be incredibly useful when bootstrapping a new server, or machine, as it can easily be scripted. A common use case for sed is to script the editing of configuration files on a new server instance to facilitate the further setup of the needed environment for that machine.
+
+For this chapter we’ll be using the file in Listing 7.1 as the basis for all of our examples.
+
+$ cat birthday.txt
+Listing 7.1
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday Dear (name)
+Happy Birthday to You, cha, cha, cha.
+7.1 Installation (Mac OS X)
+
+Mac OS X ships with a version of sed that, while mostly functional, is feature incomplete, and in some cases just broken. To fix this, I would recommend installing gnu-sed to replace the built-in version of sed on OS X machines.
+
+If you are on a Mac, the best and easiest way to install gnu-sed is using Homebrew.
+
+$ brew install gnu-sed --default-names
+I would recommend a restart of your terminal before you continue to ensure you are using the correct binary.
+
+7.2 The Basics (s)
+
+As mentioned earlier, sed is an editor that allows us to use pattern matching to search and replace within a file, or an input stream. This works by using Regular Expressions.
+
+By default, the results of any edits we make to a source file, or input stream, will be sent to STDOUT, the standard output. The original file will be unaffected by the edits. In Section 7.3 we will see how to update the original file directly with edits.
+
+Let’s use sed to replace all vowels from our example file and replace them with *.
+
+$ sed "s/[aeiou]/*/" birthday.txt
+Listing 7.2
+H*ppy Birthday to You, cha, cha, cha.
+H*ppy Birthday to You, cha, cha, cha.
+H*ppy Birthday Dear (name)
+H*ppy Birthday to You, cha, cha, cha.
+In Listing 7.2 we can see that only the first vowel on each line was replaced with a *. Before we talk about why that is and how to fix it, let’s examine what we told sed to do.
+
+In this example we passed sed two arguments. The first argument is what we want sed to do, in the form of s/regexp/replacement/. It’s important to note that I wrapped the first argument in quotes to escape it. The second argument is the path to a file we want to read from.
+
+7.2.1 Global Replace
+
+In Listing 7.2 we saw that only the first vowel in each line was replaced. We can update our regular expression to use the g option, which means “global”, to replace all vowels on each line with *.
+
+$ sed "s/[aeiou]/*/g" birthday.txt
+Listing 7.3
+H*ppy B*rthd*y t* Y**, ch*, ch*, ch*.
+H*ppy B*rthd*y t* Y**, ch*, ch*, ch*.
+H*ppy B*rthd*y D**r (n*m*)
+H*ppy B*rthd*y t* Y**, ch*, ch*, ch*.
+As we can see in Listing 7.3 we have successfully replaced the vowels from our example file.
+
+7.2.2 nth Replace
+
+sed has a rather interesting feature in that it will allow us to replace the nth occurrence of a pattern.
+
+Let’s write a sed script that will replace the second occurrence of the word cha on each line with the word foo.
+
+$ sed "s/cha/foo/2" birthday.txt
+Listing 7.4
+Happy Birthday to You, cha, foo, cha.
+Happy Birthday to You, cha, foo, cha.
+Happy Birthday Dear (name)
+Happy Birthday to You, cha, foo, cha.
+In Listing 7.4 we replaced the g option with the number 2 to tell sed to replace the second occurrence of the pattern on each line that it is found.
+
+7.3 Saving Files
+
+By default, sed will print its output to the standard output, STDOUT, but sometimes we want to be able to update the source file directly.
+
+7.3.1 Editing in Place (-i)
+
+On most Unix and Linux systems you can use the -i flag to allow sed to edit the file in place. This means your edits will be saved directly to the file.
+
+Let’s use -i to replace the (name) placeholder in the file with the name Mark.
+
+$ sed -i "s/(name)/Mark/" birthday.txt
+When using the -i flag there will be no output if the command was successful. We can print the contents of the file to the screen to verify our edits using the cat command (that we’ll learn about in Section 9.2), as seen in Listing 7.5.
+
+Listing 7.5: $ cat birthday.txt
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday Dear Mark
+Happy Birthday to You, cha, cha, cha.
+7.3.2 Using Backup Files
+
+The -i flag lets you optionally pass it an argument that represents an extension for a backup file.
+
+$ sed -i.tmp "s/(name)/Mark/" birthday.txt
+Listing 7.6: $ ls -la
+drwxr-xr-x   7 markbates  staff  238 Dec 11 15:10 .
+drwxr-xr-x  12 markbates  staff  408 Dec 11 10:43 ..
+-rw-r--r--   1 markbates  staff  139 Dec 11 15:10 birthday.txt
+-rw-r--r--   1 markbates  staff  141 Dec 11 10:22 birthday.txt.tmp
+We can see in Listing 7.6 that we now have a second file, birthday.txt.tmp, named after the original file, birthday.txt, but the new file contains the original content before the substitution.
+
+Using backup files allows us to perform the edits and verify that the file is correct without losing the original content. If we are satisfied with our changes, we can delete the backup file; or, if we need to revert the edits, we can simply rename the .tmp file to the original file name.
+
+7.4 Case Insensitive Searches
+
+sed supports the Regular Expression option i to make its search pattern case insensitive.
+
+Let’s replace all instances of the word happy, regardless of its case, to the word Merry.
+
+$ sed "s/happy/Merry/i" birthday.txt
+Listing 7.7
+Merry Birthday to You, cha, cha, cha.
+Merry Birthday to You, cha, cha, cha.
+Merry Birthday Dear (name)
+Merry Birthday to You, cha, cha, cha.
+7.5 Matching Lines
+
+So far we have been operating on every line in the example file, but what if we only want to operate on certain lines in the file?
+
+Let’s write a sed script that will replace every character in a line that matches cha with the character *.1
+
+$ sed "/cha/s/./*/g" birthday.txt
+Listing 7.8
+*************************************
+*************************************
+Happy Birthday Dear (name)
+*************************************
+As you can see in Listing 7.8 we proceeded our search pattern with /cha/. This tells sed to match the line against this pattern, and if the line matches, then it performs the subsequent search and replace.
+
+7.6 Manipulating Matches
+
+sed provides several ways to manipulate the matches during the replacement phase. Let’s look at a couple of those now.
+
+7.6.1 Changing Case
+
+The & variable can be used in the replace section of your sed script to represent a match from the search part of the script.
+
+sed has several special characters we can use in the replace section of our script to manipulate the data we get using the & variable.
+
+The first such character we use is \u. The \u character will convert whatever comes after it to uppercase.
+
+Let’s write a script that combines \u and & to capitalize all of the vowels in the example file.
+
+$ sed 's/[aeiou]/\u&/g' birthday.txt
+Listing 7.9
+HAppy BIrthdAy tO YOU, chA, chA, chA.
+HAppy BIrthdAy tO YOU, chA, chA, chA.
+HAppy BIrthdAy DEAr (nAmE)
+HAppy BIrthdAy tO YOU, chA, chA, chA.
+Listing 7.9 shows that we have successfully managed to capitalize the vowels in the file.
+
+We can use the same technique, this time using the \l character, to lower the case of all of the capital letters in the example file.
+
+$ sed 's/[A-Z]/\l&/g' birthday.txt
+Listing 7.10
+happy birthday to you, cha, cha, cha.
+happy birthday to you, cha, cha, cha.
+happy birthday dear (name)
+happy birthday to you, cha, cha, cha.
+In Listing 7.10 we successfully converted all capital letters to lowercase letters.
+
+7.7 Controlling Output (-n)
+
+Up until now, sed has been printing its output, by default, to the console or standard output (STDOUT). In Section 7.3 we learned how to save the output to a file, but what if we want to control what gets printed to the console?
+
+Using the -n flag we can suppress the default output of sed. For example, the following command won’t print anything to the console window.
+
+$ sed -n "s/(name)/Mark/" birthday.txt
+7.7.1 Printing Modified Content (p)
+
+Suppressing all of the output to the console can be useful, but usually we want to display some output.
+
+By using the p option we can tell sed to print only the changes to the console for us.
+
+$ sed -n "s/(name)/Mark/p" birthday.txt
+Listing 7.11
+Happy Birthday Dear Mark
+In Listing 7.11 we see just the one line of the file that the search and replace query affected.
+
+7.7.2 Writing Modified Content to a File (w)
+
+Using the -n flag and the p option, we can write only modified lines to a separate file using the w option and giving it a file name.
+
+$ sed -n "s/(name)/Mark/pw birthday2.txt" birthday.txt
+Listing 7.12: $ cat birthday2.txt
+Happy Birthday Dear Mark
+Listing 7.12 shows the contents of the birthday2.txt file containing only the single line that we wanted to change.
+
+7.7.3 Displaying Specific Lines
+
+The -n flag takes an optional argument that we can use to print out specific lines of content.
+
+Using the -n flag and p option, we can write a query that will print every other line of our example file to the console.
+
+$ sed -n '1~2p' birthday.txt
+Listing 7.13
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday Dear (name)
+In Listing 7.13 we passed an argument to the -n flag. This argument can be read as starting at line 1 print (p) every 2nd line.
+
+7.8 Delete Lines (d)
+
+So far we have seen how to search and replace patterns with sed, but what if we simply want to remove a particular line from a file?
+
+Using the d option, we can tell sed to delete any lines that match a specific pattern.
+
+$ sed "/(name)/d" birthday.txt
+Listing 7.14
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday to You, cha, cha, cha.
+Happy Birthday to You, cha, cha, cha.
+In Listing 7.14 we told sed to delete any lines that match the pattern (name). It should be pointed out that this is only changing the output, and has left the original file untouched. If you want to write these modifications back to the file, you can use the techniques we learned about in Section 7.3.1.
+
+7.9 Running Multiple sed Commands (;)
+
+At times it may be useful to run multiple sed commands at the same time across a specific piece of content. sed allows us to do this using the ; operator.
+
+Listing 7.15 shows the contents of the file we’re going to use for the examples in this section.
+
+Listing 7.15: $ cat example.html
+<p>
+  This <i>is</i> some <b>HTML</b>.
+</p>
+<a href="http://www.conqueringthecommandline.com">Conquering the Command Line</a>
+Lets use sed to strip all of the HTML tags out of the file.
+
+$ sed 's/<[^>]*>//g' example.html
+Listing 7.16
+  
+  This is some HTML.
+  
+Conquering the Command Line
+Listing 7.16 doesn’t use anything new about sed that we don’t already know, just a different search and replace pattern.
+
+The problem with Listing 7.16 is that while it stripped out all of the HTML tags from the file, it left us with blank lines, as we can see in Listing 7.17
+
+Listing 7.17
+  
+  This is some HTML.
+  
+Conquering the Command Line
+There are a couple of different ways we can fix this problem. The first way would be use the pipe operator, |, to take the output of Listing 7.16 and send it to a second sed command to delete the blank lines using the d option we learned about in Section 7.8. We can see the results of this approach in Listing 7.18
+
+$ sed 's/<[^>]*>//g' example.html | sed '/^$/d'
+Listing 7.18
+  This is some HTML.
+Conquering the Command Line
+While Listing 7.18 certainly achieves our intended goal to remove both the HTML tags and any blank lines, there is a second, more efficient way of running both commands - and that is to use the ; operator that sed provides.
+
+$ sed 's/<[^>]*>//g;/^$/d' example.html
+Listing 7.19
+  This is some HTML.
+Conquering the Command Line
+As Listing 7.19 shows, we are able to concatenate the two commands together using the ; operator. The results of Listing 7.19 are the same as Listing 7.18, but with slightly faster execution time, and less typing.
+
+7.10 Conclusion
+
+As we’ve seen in this chapter, sed is a very simple editor that allows us to quickly edit files or streams. A basic understanding of sed can come in very handy when you’re working on a bare machine that has yet to have a more sophisticated editor installed.
+
+sed can easily be scripted. This makes it a great tool to use in deployment scripts to update configuration files or other similar operations.
+
+Feel free and use this script on all of those top secret government projects you are working on. ↑
